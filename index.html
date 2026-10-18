@@ -179,7 +179,8 @@
 <div class="modal" id="loginModal" hidden>
   <div class="modalCard">
     <h3>🔒 Modo administrador</h3>
-    <div class="fRow">Contraseña<input type="password" id="adminPass" autocomplete="off"></div>
+    <div class="fRow">Usuario<input id="adminUser" value="admin" autocomplete="username"></div>
+    <div class="fRow">Contraseña<input type="password" id="adminPass" autocomplete="current-password"></div>
     <div class="mBtns"><button id="loginCancel">Cancelar</button><button class="primary" id="loginGo">Entrar</button></div>
   </div>
 </div>
@@ -201,7 +202,7 @@
 <script src="data.js"></script>
 <script>
 'use strict';
-const ADMIN_HASH = 'dba35cd7386af3d583041b9ae0ea20cd9c29d2fd9a0b79f1cd5828a48eb0e8e3';
+const ADMIN_HASH = '3219d5d0cef1ccbe929092f051421595b3bd32e8a072b7241306e815a0ab749d';
 const META_SLIME = {
   rating: 9.2, demographic: 'Shounen', estado: 'PUBLICÁNDOSE', cover: 'cover.jpg',
   genres: ['Acción','Aventura','Magia','Reencarnación'],
@@ -347,9 +348,9 @@ function renderChapList(){
     row.querySelector('.openBtn').onclick = ev => { ev.stopPropagation(); openChapter(c.num); };
     row.querySelector('.hearBtn').onclick = ev => { ev.stopPropagation(); openChapter(c.num, {autoplay:true}); };
     const eb = row.querySelector('.editBtn');
-    if (eb) eb.onclick = ev => { ev.stopPropagation(); adminOnly(); };
+    if (eb) eb.onclick = ev => { ev.stopPropagation(); renameChapter(state.manga, c.num); };
     const db = row.querySelector('.delBtn');
-    if (db) db.onclick = ev => { ev.stopPropagation(); adminOnly(); };
+    if (db) db.onclick = ev => { ev.stopPropagation(); hideChapter(state.manga, c.num, true); };
     row.onclick = () => openChapter(c.num);
     list.appendChild(row);
   }
@@ -688,11 +689,12 @@ async function tryLogin(){
   const left = lockLeft();
   if (left > 0){ toast('Bloqueado. Espera ' + Math.ceil(left/1000) + ' s'); return; }
   const pw = $('#adminPass').value || '';
+  const user = ($('#adminUser').value || '').trim();
   let n = 0;
   try { n = parseInt(sessionStorage.getItem('sl-admin-n') || '0', 10); } catch(e){}
   let hex = '';
   try { hex = await sha256hex(pw); } catch(e){}
-  if (hex && hex === ADMIN_HASH){
+  if (hex && user === 'admin' && hex === ADMIN_HASH){
     try { sessionStorage.setItem('sl-admin', '1'); sessionStorage.setItem('sl-admin-n', '0'); } catch(e){}
     $('#adminPass').value = '';
     $('#loginModal').hidden = true;
@@ -734,19 +736,33 @@ function renderAdminList(){
       if (hid) delete o.hidden[mid][num]; else o.hidden[mid][num] = 1;
       saveOv(o); renderAdminList(); openDetailRefresh();
     });
-    mkBtn('Título', () => {
-      const cur = (((getOv().titles||{})[mid]||{})[num]) || (base && base.title) || (add && add.title) || '';
-      const t = prompt('Título del capítulo ' + num + ':', cur || '');
-      if (t === null) return;
-      const o = getOv();
-      if (add){ add.title = t; }
-      else { o.titles = o.titles || {}; o.titles[mid] = o.titles[mid] || {}; if (t) o.titles[mid][num] = t; else delete o.titles[mid][num]; }
-      saveOv(o); renderAdminList(); openDetailRefresh();
-    });
+    mkBtn('Título', () => renameChapter(mid, num));
     box.appendChild(row);
   });
 }
-function openDetailRefresh(){ if (!$('#detailView').hidden) openDetail(); else { renderCards($('#catSearch').value); } }
+function openDetailRefresh(){ if (!$('#detailView').hidden) openDetail(); else { renderCards(($('#catSearch') && $('#catSearch').value) || ''); } }
+function renameChapter(mid, num){
+  const ov = getOv();
+  const base = CHAPTERS.find(c=>c.num===num);
+  const add = (ov.added||[]).find(a=>a.manga===mid && a.num===num);
+  const cur = (((ov.titles||{})[mid]||{})[num]) || (base && base.title) || (add && add.title) || '';
+  const t = prompt('Título del capítulo ' + num + ':', cur || '');
+  if (t === null) return;
+  if (add){ add.title = t; }
+  else { ov.titles = ov.titles || {}; ov.titles[mid] = ov.titles[mid] || {}; if (t) ov.titles[mid][num] = t; else delete ov.titles[mid][num]; }
+  saveOv(ov);
+  renderChapList();
+  if (!$('#adminModal').hidden) renderAdminList();
+  toast('Título actualizado');
+}
+function hideChapter(mid, num, hide){
+  const o = getOv(); o.hidden = o.hidden || {}; o.hidden[mid] = o.hidden[mid] || {};
+  if (hide) o.hidden[mid][num] = 1; else delete o.hidden[mid][num];
+  saveOv(o);
+  renderChapList();
+  if (!$('#adminModal').hidden) renderAdminList();
+  toast(hide ? 'Capítulo oculto' : 'Capítulo visible');
+}
 const PAGE_JUNK_RE2 = /logo|icon|avatar|banner|advert|\/ads[\/\.]|favicon|sprite|badge|emoji|\.svg(\?|$)/i;
 async function stripsFromViewer(pageUrl){
   async function getText(u){
