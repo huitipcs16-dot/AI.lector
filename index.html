@@ -669,6 +669,8 @@ function lineText(l){
 }
 function renderTranscript(){
   const t = $('#trans'); t.innerHTML = '';
+  if (!isAdmin()){ t.hidden = true; $('#status').textContent = ''; return; }
+  t.hidden = false;
   state.lines.forEach((l, i) => {
     const d = document.createElement('div');
     d.className = 'line' + (i === state.lineIndex ? ' active' : '');
@@ -806,6 +808,7 @@ async function tryLogin(){
     $('#loginModal').hidden = true;
     updateAdminBtn();
     openAdminPanel();
+    if (state.pages.length) renderTranscript();
     toast('Sesión de administrador');
   } else {
     n++;
@@ -1025,7 +1028,7 @@ $('#adminPass').onkeydown = e => { if (e.key === 'Enter') tryLogin(); };
 $('#admAdd').onclick = adminAddChapter;
 $('#admExport').onclick = adminExport;
 $('#admClose').onclick = () => { $('#adminModal').hidden = true; openDetailRefresh(); };
-$('#admLogout').onclick = () => { try { sessionStorage.removeItem('sl-admin'); } catch(e){} $('#adminModal').hidden = true; updateAdminBtn(); openDetailRefresh(); toast('Sesión cerrada'); };
+$('#admLogout').onclick = () => { try { sessionStorage.removeItem('sl-admin'); } catch(e){} $('#adminModal').hidden = true; updateAdminBtn(); openDetailRefresh(); if (state.pages.length) renderTranscript(); toast('Sesión cerrada'); };
 $('#admManga').onchange = renderAdminList;
 function buildSidePicker(){
   const im = $('#rsSideImgs'); im.innerHTML = '';
