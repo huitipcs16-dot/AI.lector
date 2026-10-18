@@ -145,7 +145,7 @@
       <select id="genreSel"><option value="">Todos los géneros</option></select>
       <button id="newMangaBtn">+ Nuevo manga</button>
     </div>
-    <div id="contSec" hidden><button id="contBtn" class="primary"></button></div>
+    <div id="contSec" hidden style="display:flex;gap:8px"><button id="contBtn" class="primary" style="flex:1"></button><button id="contDismiss" title="Quitar">✕</button></div>
     <div class="catGrid" id="catGrid"></div>
     <h3 id="histHead" hidden style="color:#7fb3ff;margin:18px 0 4px">🕘 Historial</h3>
     <div style="margin:0 0 4px;text-align:right"><button class="smallBtn" id="histClear" hidden>Borrar todo</button></div>
@@ -491,6 +491,7 @@ function renderCont(){
   $('#contBtn').textContent = '▶ Continuar: ' + ml[last.m].title + ' · Cap. ' + last.c + ' · pág. ' + ((last.p || 0) + 1);
   $('#contBtn').onclick = () => { state.manga = last.m; openChapter(last.c, {startPage: last.p || 0}); };
 }
+$('#contDismiss').onclick = () => { try { localStorage.removeItem('sl-proglast'); } catch(_){} renderCont(); };
 function getHist(){ try { return JSON.parse(localStorage.getItem('sl-hist') || '[]') || []; } catch(e){ return []; } }
 function pushHist(){
   if (!state.chap) return;
