@@ -322,8 +322,8 @@ function applyReadPrefs(){
   const w = READ_WIDTHS[state.readWidth] || null;
   const st = $('#stage');
   st.style.maxWidth = w ? w + 'px' : '100%';
-  st.style.marginInline = 'auto';
-  st.style.display = 'block';
+  st.style.display = 'inline-block';
+  st.style.verticalAlign = 'top';
   st.style.background = READ_BGS[state.readBg] || '#05060a';
   document.querySelectorAll('#rsWidthRow button').forEach(b=>{
     b.classList.toggle('primary', b.dataset.w === state.readWidth);
