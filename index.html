@@ -197,6 +197,15 @@
         <button class="bgDot" data-b="blanco" title="Blanco" style="width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid #555"></button>
       </div>
     </div>
+    <div class="fRow">FONDOS LATERALES
+      <div id="rsSideImgs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <div id="rsSideCols" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="smallBtn" id="rsSideNone">Ninguno</button>
+        <button class="smallBtn" id="rsSideUp">📷 Subir foto</button>
+        <input type="file" id="rsSideFile" accept="image/*" hidden>
+      </div>
+    </div>
     <div class="fRow">VELOCIDAD DE AUTO-SCROLL
       <input type="range" id="rsSpeed" min="1" max="10" step="1" value="4" style="width:100%">
       <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--dim)"><span>Rápido</span><span id="rsSpeedVal">4 s</span><span>Lento</span></div>
@@ -279,6 +288,36 @@ const state = {
 };
 const READ_WIDTHS = {estrecho:480, normal:640, ancho:900, completo:null};
 const READ_BGS = {negro:'#0f1117', azul:'#1a2030', marron:'#221a12', crema:'#e8dcc8', blanco:'#ffffff'};
+const SIDE_IMGS = [
+  'https://user.uploads.dev/file/4091b111a9e40cc53ec320b4c1470ac0.jpg',
+  'https://user.uploads.dev/file/ff83161452d1aa5b2a7ae1753ab69531.jpg',
+  'https://user.uploads.dev/file/80ba634e5ce51d916f832267f49f66bd.jpg',
+];
+const SIDE_COLORS = ['#000000','#1a2030','#5b2a3a','#1e4d3a','#e8dcc8'];
+function getSide(){ try { return JSON.parse(localStorage.getItem('sl-side') || '{"t":"none"}'); } catch(e){ return {t:'none'}; } }
+function setSide(s){ try { localStorage.setItem('sl-side', JSON.stringify(s)); } catch(e){ toast('Imagen muy pesada: se usará solo esta sesión'); } }
+function applySideBg(){
+  const rv = $('#readerView');
+  if (!rv) return;
+  const s = getSide();
+  rv.style.backgroundColor = '';
+  rv.style.backgroundImage = '';
+  rv.style.backgroundSize = '';
+  rv.style.backgroundPosition = '';
+  if (!s || s.t === 'none') return;
+  if (s.t === 'color') rv.style.backgroundColor = s.v;
+  else if (s.t === 'img' && s.v){
+    rv.style.backgroundImage = 'url("' + s.v + '")';
+    rv.style.backgroundSize = 'cover';
+    rv.style.backgroundPosition = 'center top';
+  }
+  document.querySelectorAll('#rsSideImgs img').forEach(im=>{
+    im.style.outline = (s.t === 'img' && s.v === im.dataset.u) ? '2px solid var(--accent)' : 'none';
+  });
+  document.querySelectorAll('#rsSideCols .bgDot').forEach(b=>{
+    b.style.outline = (s.t === 'color' && s.v === b.dataset.c) ? '2px solid var(--accent)' : 'none';
+  });
+}
 function applyReadPrefs(){
   const w = READ_WIDTHS[state.readWidth] || null;
   const st = $('#stage');
@@ -988,7 +1027,42 @@ $('#admExport').onclick = adminExport;
 $('#admClose').onclick = () => { $('#adminModal').hidden = true; openDetailRefresh(); };
 $('#admLogout').onclick = () => { try { sessionStorage.removeItem('sl-admin'); } catch(e){} $('#adminModal').hidden = true; updateAdminBtn(); openDetailRefresh(); toast('Sesión cerrada'); };
 $('#admManga').onchange = renderAdminList;
-$('#setBtn').onclick = () => { applyReadPrefs(); $('#setModal').hidden = false; };
+function buildSidePicker(){
+  const im = $('#rsSideImgs'); im.innerHTML = '';
+  SIDE_IMGS.forEach(u => {
+    const g = document.createElement('img');
+    g.src = u; g.dataset.u = u;
+    g.style.cssText = 'width:64px;height:96px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--line)';
+    g.onclick = () => { setSide({t:'img', v:u}); applySideBg(); };
+    im.appendChild(g);
+  });
+  const co = $('#rsSideCols'); co.innerHTML = '';
+  SIDE_COLORS.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'bgDot'; b.dataset.c = c; b.title = c;
+    b.style.cssText = 'width:34px;height:34px;border-radius:50%;background:' + c + ';border:2px solid #555';
+    b.onclick = () => { setSide({t:'color', v:c}); applySideBg(); };
+    co.appendChild(b);
+  });
+}
+function downscaleSide(file){
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, 700 / img.naturalWidth);
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * s));
+      c.height = Math.max(1, Math.round(img.naturalHeight * s));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+$('#setBtn').onclick = () => { applyReadPrefs(); applySideBg(); $('#setModal').hidden = false; };
 $('#setClose').onclick = () => { $('#setModal').hidden = true; };
 document.querySelectorAll('#rsWidthRow button').forEach(b=>{ b.onclick = ()=>{
   state.readWidth = b.dataset.w;
@@ -1011,8 +1085,24 @@ document.querySelectorAll('#rsAutoRow button').forEach(b=>{ b.onclick = ()=>{
   applyReadPrefs();
   toast(state.autoTurn ? 'Pasará páginas solo' : 'Se detendrá en cada página');
 };});
+$('#rsSideNone').onclick = () => { setSide({t:'none'}); applySideBg(); };
+$('#rsSideUp').onclick = () => $('#rsSideFile').click();
+$('#rsSideFile').onchange = async e => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  const du = await downscaleSide(f);
+  if (!du){ toast('No se pudo leer la imagen'); return; }
+  try {
+    setSide({t:'img', v:du});
+  } catch(err){}
+  applySideBg();
+  toast('Fondo aplicado en este dispositivo');
+};
 updateAdminBtn();
 applyReadPrefs();
+applySideBg();
+buildSidePicker();
 initHome();
 </script>
 </body>
