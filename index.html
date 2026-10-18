@@ -822,7 +822,7 @@ async function tryLogin(){
     } else toast('Contraseña incorrecta (' + n + '/5)');
   }
 }
-function updateAdminBtn(){ $('#adminBtn').textContent = isAdmin() ? '🔓' : '🔒'; }
+function updateAdminBtn(){ $('#adminBtn').textContent = isAdmin() ? '🔓' : '🔒'; $('#newMangaBtn').hidden = !isAdmin(); }
 function openAdminPanel(){
   if (!isAdmin()){ $('#loginModal').hidden = false; setTimeout(()=>{ try{$('#adminPass').focus();}catch(e){} }, 50); return; }
   renderAdminList();
