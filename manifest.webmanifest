@@ -1,0 +1,16 @@
+{
+  "name": "AILector",
+  "short_name": "AILector",
+  "description": "Lector de manga con narración por voz",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "logo.jpg", "sizes": "409x409", "type": "image/jpeg", "purpose": "any" }
+  ]
+}
