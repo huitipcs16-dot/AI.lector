@@ -277,7 +277,7 @@ function adminOnly(){ toast('Solo el administrador en el lector original'); }
 
 const state = {
   manga: 0, chap: null, pages: [], pageIndex: 0, lines: [], lineIndex: -1,
-  playing: false, gen: 0, showBoxes: true,
+  playing: false, gen: 0, showBoxes: true, voiceMode: true,
   mode: localStorage.getItem('sl-mode') || 'translation',
   rate: parseFloat(localStorage.getItem('sl-rate') || '1') || 1,
   voice: null,
@@ -587,6 +587,7 @@ async function openChapter(num, opts){
   if (!ch) return;
   stopAll();
   state.chap = ch; state.pages = []; state.pageIndex = 0;
+  state.voiceMode = !!(opts.autoplay || opts.voice);
   show('reader');
   $('#trans').innerHTML = '';
   $('#boxes').innerHTML = '';
@@ -608,6 +609,7 @@ async function openChapter(num, opts){
       lines: ((ch.pages && ch.pages[i]) || []).map(l => Object.assign({}, l)),
     }));
     $('#loader').hidden = true;
+    $('#playBtn').hidden = !state.voiceMode;
     renderThumbs();
     setPage(0);
     try { localStorage.setItem('sl-last', String(num)); } catch(e){}
@@ -727,6 +729,7 @@ function stopAll(){
   $('#playBtn').textContent = '▶ Escuchar';
 }
 async function speakFrom(i){
+  if (!state.voiceMode) return;
   const gen = ++state.gen;
   stopAll(); state.gen = gen;
   if (!('speechSynthesis' in window)){
@@ -968,6 +971,7 @@ $('#backBtn').onclick = () => {
 $('#prevBtn').onclick = () => goToPage(state.pageIndex - 1);
 $('#nextBtn').onclick = () => goToPage(state.pageIndex + 1);
 $('#playBtn').onclick = () => {
+  if (!state.voiceMode) return;
   if (state.playing){ stopAll(); setActive(-1); renderTranscript(); return; }
   speakFrom(state.lineIndex >= 0 ? state.lineIndex : 0);
 };
