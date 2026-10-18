@@ -150,6 +150,8 @@
       <button id="prevBtn" title="Página anterior">◀</button>
       <button id="playBtn" class="primary" title="Leer en voz alta">▶ Escuchar</button>
       <button id="nextBtn" title="Página siguiente">▶</button>
+      <button id="prevChapBtn" title="Capítulo anterior">⏮</button>
+      <button id="nextChapBtn" title="Capítulo siguiente">⏭</button>
       <select id="modeSel" title="Idioma">
         <option value="translation">Traducción</option>
         <option value="original">Original</option>
@@ -970,6 +972,8 @@ $('#backBtn').onclick = () => {
 };
 $('#prevBtn').onclick = () => goToPage(state.pageIndex - 1);
 $('#nextBtn').onclick = () => goToPage(state.pageIndex + 1);
+$('#prevChapBtn').onclick = () => stepChapter(-1);
+$('#nextChapBtn').onclick = () => stepChapter(1);
 $('#playBtn').onclick = () => {
   if (!state.voiceMode) return;
   if (state.playing){ stopAll(); setActive(-1); renderTranscript(); return; }
