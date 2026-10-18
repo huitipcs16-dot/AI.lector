@@ -327,6 +327,7 @@ function renderChapList(){
     return;
   }
   const sorted = chaps.slice().sort((a,b)=>b.num - a.num);
+  const showAdm = isAdmin();
   for (const c of sorted){
     const row = document.createElement('div');
     row.className = 'chapRow';
@@ -334,7 +335,8 @@ function renderChapList(){
     row.innerHTML = '<button class="readToggle' + (done ? ' done' : '') + '" title="Marcar leído">' + (done ? '✅' : '⬜') + '</button>' +
       '<div class="t"><b>Capítulo ' + c.num + '</b>' + (c.title ? ' — ' + escapeHtml(c.title) : '') + '</div>' +
       '<div class="d">' + escapeHtml(c.date || '') + ' · ' + ((c.pages||[]).length || c.stripCount || 0) + ' pág.</div>' +
-      '<div class="rowBtns"><button class="smallBtn hearBtn">🔊 Escuchar</button><button class="smallBtn openBtn">Leer online</button><button class="smallBtn editBtn">Editar</button><button class="smallBtn delBtn">✕</button></div>';
+      '<div class="rowBtns"><button class="smallBtn hearBtn">🔊 Escuchar</button><button class="smallBtn openBtn">Leer online</button>' +
+      (showAdm ? '<button class="smallBtn editBtn">Editar</button><button class="smallBtn delBtn">✕</button>' : '') + '</div>';
     row.querySelector('.readToggle').onclick = ev => {
       ev.stopPropagation();
       const r = getReads(), k = readKey(c.num);
@@ -344,8 +346,10 @@ function renderChapList(){
     };
     row.querySelector('.openBtn').onclick = ev => { ev.stopPropagation(); openChapter(c.num); };
     row.querySelector('.hearBtn').onclick = ev => { ev.stopPropagation(); openChapter(c.num, {autoplay:true}); };
-    row.querySelector('.editBtn').onclick = ev => { ev.stopPropagation(); adminOnly(); };
-    row.querySelector('.delBtn').onclick = ev => { ev.stopPropagation(); adminOnly(); };
+    const eb = row.querySelector('.editBtn');
+    if (eb) eb.onclick = ev => { ev.stopPropagation(); adminOnly(); };
+    const db = row.querySelector('.delBtn');
+    if (db) db.onclick = ev => { ev.stopPropagation(); adminOnly(); };
     row.onclick = () => openChapter(c.num);
     list.appendChild(row);
   }
@@ -884,8 +888,8 @@ $('#loginGo').onclick = tryLogin;
 $('#adminPass').onkeydown = e => { if (e.key === 'Enter') tryLogin(); };
 $('#admAdd').onclick = adminAddChapter;
 $('#admExport').onclick = adminExport;
-$('#admClose').onclick = () => { $('#adminModal').hidden = true; };
-$('#admLogout').onclick = () => { try { sessionStorage.removeItem('sl-admin'); } catch(e){} $('#adminModal').hidden = true; updateAdminBtn(); toast('Sesión cerrada'); };
+$('#admClose').onclick = () => { $('#adminModal').hidden = true; openDetailRefresh(); };
+$('#admLogout').onclick = () => { try { sessionStorage.removeItem('sl-admin'); } catch(e){} $('#adminModal').hidden = true; updateAdminBtn(); openDetailRefresh(); toast('Sesión cerrada'); };
 $('#admManga').onchange = renderAdminList;
 updateAdminBtn();
 initHome();
