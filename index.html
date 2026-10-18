@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slime Lector — Tensei Shitara Slime Datta Ken</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:#141419; color:#eee; text-align:center; }
+  header { padding:18px 12px 8px; }
+  h1 { margin:0 0 4px; font-size:1.4em; }
+  .meta { color:#aaa; font-size:.9em; margin-bottom:10px; }
+  #cover { width:150px; border-radius:8px; box-shadow:0 4px 18px #000; }
+  #syn { max-width:640px; margin:10px auto; color:#ccc; font-size:.92em; line-height:1.45; padding:0 14px; }
+  #chapGrid { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:12px; max-width:760px; margin:0 auto 40px; }
+  #chapGrid button { width:64px; padding:10px 0; font-size:1em; border:1px solid #444; border-radius:8px; background:#222; color:#eee; cursor:pointer; }
+  #chapGrid button:hover { background:#333; border-color:#888; }
+  #reader { display:none; max-width:800px; margin:0 auto; padding:10px 10px 60px; }
+  #bar { display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; margin:8px 0; position:sticky; top:0; background:#141419; padding:8px 0; z-index:5; }
+  #bar button, #bar select { font-size:1em; padding:8px 12px; border-radius:8px; border:1px solid #444; background:#222; color:#eee; cursor:pointer; }
+  #bar button:hover { background:#333; }
+  #bar button.primary { background:#2e7d32; border-color:#2e7d32; font-weight:bold; }
+  #stage { position:relative; display:inline-block; max-width:100%; background:#000; border-radius:6px; }
+  #pageImg { max-width:100%; max-height:82vh; display:block; border-radius:6px; }
+  .bubble { position:absolute; border:2px solid rgba(255,235,59,.85); border-radius:6px; background:rgba(255,235,59,.10); pointer-events:none; }
+  #pageTag { color:#aaa; margin:6px 0; font-size:.9em; }
+  #trans { text-align:left; max-width:640px; margin:12px auto 0; display:flex; flex-direction:column; gap:6px; }
+  .line { background:#1e1e26; border:1px solid #333; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:.95em; line-height:1.4; }
+  .line:hover { border-color:#777; }
+  .line.active { border-color:#ffeb3b; background:#2a2a18; }
+  .line .spk { color:#8bc34a; font-weight:bold; font-size:.85em; display:block; margin-bottom:2px; }
+  #status { color:#8bc34a; min-height:1.4em; margin-top:8px; font-size:.9em; }
+  #loader { display:none; margin:30px 0; }
+  .spin { display:inline-block; width:34px; height:34px; border:4px solid #444; border-top-color:#8bc34a; border-radius:50%; animation:sp 1s linear infinite; vertical-align:middle; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+  a.back { color:#8bc34a; cursor:pointer; text-decoration:underline; }
+</style>
+</head>
+<body>
+<header id="home">
+  <img id="cover" src="cover.jpg" alt="Portada">
+  <h1 id="mTitle">Cargando…</h1>
+  <div class="meta" id="mMeta"></div>
+  <p id="syn"></p>
+  <h3>Capítulos</h3>
+  <div id="chapGrid"></div>
+</header>
+
+<div id="reader">
+  <div id="bar">
+    <button id="backBtn" title="Volver al catálogo">☰</button>
+    <button id="prevBtn" title="Página anterior">◀</button>
+    <button id="playBtn" class="primary" title="Leer en voz alta">▶ Escuchar</button>
+    <button id="nextBtn" title="Página siguiente">▶</button>
+    <select id="modeSel" title="Idioma de lectura">
+      <option value="translation">Traducción</option>
+      <option value="original">Original</option>
+    </select>
+    <select id="rateSel" title="Velocidad de voz">
+      <option value="0.9">0.9×</option>
+      <option value="1" selected>1×</option>
+      <option value="1.15">1.15×</option>
+      <option value="1.3">1.3×</option>
+    </select>
+    <button id="boxBtn" title="Mostrar/ocultar cuadros de diálogo">💬</button>
+  </div>
+  <div id="pageTag"></div>
+  <div id="stage">
+    <img id="pageImg" alt="Página del manga" referrerpolicy="no-referrer">
+    <div id="boxes"></div>
+  </div>
+  <div id="loader"><span class="spin"></span> <span id="loadTxt">Cargando capítulo…</span></div>
+  <div id="status"></div>
+  <div id="trans"></div>
+  <p><a class="back" id="backLink">← Volver a los capítulos</a></p>
+</div>
+
+<script src="data.js"></script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+const state = {
+  chap: null, pages: [], pageIndex: 0, lines: [], lineIndex: -1,
+  playing: false, gen: 0, showBoxes: true,
+  mode: localStorage.getItem('sl-mode') || 'translation',
+  rate: parseFloat(localStorage.getItem('sl-rate') || '1') || 1,
+  voice: null,
+};
+
+/* ---------- catálogo ---------- */
+function initHome(){
+  $('#mTitle').textContent = MANGA.title;
+  $('#mMeta').textContent = (MANGA.genres||[]).join(' · ') + ' — ' + CHAPTERS.length + ' capítulos';
+  $('#syn').textContent = MANGA.synopsis || '';
+  const g = $('#chapGrid'); g.innerHTML = '';
+  for (const c of CHAPTERS){
+    const b = document.createElement('button');
+    b.textContent = c.num;
+    b.title = (c.title ? c.title : 'Capítulo ' + c.num);
+    b.onclick = () => openChapter(c.num);
+    g.appendChild(b);
+  }
+  $('#modeSel').value = state.mode;
+  $('#rateSel').value = String(state.rate);
+}
+
+/* ---------- red ---------- */
+async function fetchBlob(u){
+  try {
+    const r = await fetch(u, {referrerPolicy:'no-referrer'});
+    if (r.ok){ const b = await r.blob(); if (b && b.size > 1000) return b; }
+  } catch(e){}
+  const r2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(u));
+  if (!r2.ok) throw new Error('No se pudo descargar la imagen');
+  const b2 = await r2.blob();
+  if (!b2 || b2.size < 1000) throw new Error('Imagen vacía');
+  return b2;
+}
+
+/* ---------- corte de tiras largas (determinista) ---------- */
+async function stripRowFeats(bmp){
+  const W = bmp.width, H = bmp.height, SW = 90;
+  const c = document.createElement('canvas'); c.width = SW; c.height = H;
+  const ctx = c.getContext('2d', {willReadFrequently:true});
+  ctx.drawImage(bmp, 0, 0, SW, H);
+  const px = ctx.getImageData(0, 0, SW, H).data;
+  const rows = [];
+  for (let y = 0; y < H; y++){
+    let w = 0, d = 0;
+    for (let x = 0; x < SW; x++){
+      const i = (y * SW + x) * 4, j = (Math.min(H - 1, y + 2) * SW + x) * 4;
+      if (px[i] > 242 && px[i+1] > 242 && px[i+2] > 242) w++;
+      d += Math.abs(px[i]-px[j]) + Math.abs(px[i+1]-px[j+1]) + Math.abs(px[i+2]-px[j+2]);
+    }
+    rows.push({w:w/SW, d:d/SW});
+  }
+  return rows;
+}
+function solveStripDP(rows, H, P, LO, HI){
+  const sm = rows.map((r, y)=>{
+    let s = 0, n = 0;
+    for (let k = -3; k <= 3; k++){ const yy = y+k; if (yy >= 0 && yy < rows.length){ s += rows[yy].d; n++; } }
+    return s/n;
+  });
+  const cands = [];
+  for (let y = 4; y < H-4; y++){
+    const isPeak = sm[y] >= sm[y-1] && sm[y] >= sm[y+1] && sm[y] > sm[y-4]*1.12 && sm[y] > sm[y+4]*1.12;
+    if (rows[y].w >= 0.8 || (isPeak && sm[y] > 40)) cands.push(y);
+  }
+  const thin = [];
+  for (let y = 0; y < H; y += 30){
+    let bi = -1, bv = -1;
+    for (let k = y; k < Math.min(y+30, H); k++){
+      if (cands.indexOf(k) === -1) continue;
+      const v = rows[k].w >= 0.8 ? 1000 + rows[k].w : sm[k];
+      if (v > bv){ bv = v; bi = k; }
+    }
+    if (bi >= 0) thin.push(bi);
+  }
+  const N = thin.length, INF = 1e12;
+  const pos = i => i === -1 ? 0 : (i === N ? H : thin[i]);
+  const dp = new Array(N+1).fill(INF), par = new Array(N+1).fill(-2);
+  const get = i => i === -1 ? 0 : dp[i];
+  for (let i = 0; i <= N; i++){
+    let best = INF, bj = -2;
+    for (let j = -1; j < i; j++){
+      const len = pos(i) - pos(j);
+      if (len < LO || len > HI) continue;
+      const v = get(j) + Math.abs(len - P) * 0.4;
+      if (v < best){ best = v; bj = j; }
+    }
+    dp[i] = best; par[i] = bj;
+  }
+  if (dp[N] >= INF/2) return null;
+  const cuts = [];
+  let cur = N;
+  while (cur !== -1 && cur !== -2){ if (cur !== N) cuts.unshift(thin[cur]); cur = par[cur]; }
+  return {cuts, cost:dp[N]};
+}
+async function splitStripBlob(blobs){
+  const infos = [];
+  for (const b of blobs){
+    let bmp = null;
+    try { bmp = await createImageBitmap(b); } catch(e){}
+    let rows = null;
+    try { rows = bmp ? await stripRowFeats(bmp) : null; } catch(e){}
+    infos.push({b, bmp, rows});
+  }
+  const strips = infos.filter(x => x.bmp && x.rows && x.bmp.height > x.bmp.width * 2.2);
+  if (!strips.length){
+    for (const x of infos){ try { x.bmp && x.bmp.close(); } catch(e){} }
+    return blobs;
+  }
+  let bestP = 1450, best = Infinity;
+  for (let P = 1000; P <= 1650; P += 50){
+    let tot = 0, ok = true;
+    for (const s of strips){
+      const r = solveStripDP(s.rows, s.bmp.height, P, 700, 2000);
+      if (!r){ ok = false; break; }
+      tot += r.cost;
+    }
+    if (ok && tot < best){ best = tot; bestP = P; }
+  }
+  const pages = [];
+  for (const x of infos){
+    if (!x.bmp){ pages.push(x.b); continue; }
+    if (!x.rows || x.bmp.height <= x.bmp.width * 2.2){ pages.push(x.b); try { x.bmp.close(); } catch(e){} continue; }
+    const r = solveStripDP(x.rows, x.bmp.height, bestP, 700, 2000);
+    if (!r){ pages.push(x.b); try { x.bmp.close(); } catch(e){} continue; }
+    const bounds = [0].concat(r.cuts).concat([x.bmp.height]);
+    let okCut = bounds.length >= 3;
+    for (let k = 1; okCut && k < bounds.length; k++){
+      const len = bounds[k] - bounds[k-1];
+      if (len < 600 || len > 2100) okCut = false;
+    }
+    if (!okCut){ pages.push(x.b); try { x.bmp.close(); } catch(e){} continue; }
+    for (let k = 1; k < bounds.length; k++){
+      const y0 = bounds[k-1], hh = bounds[k] - y0;
+      const cc = document.createElement('canvas'); cc.width = x.bmp.width; cc.height = hh;
+      cc.getContext('2d').drawImage(x.bmp, 0, y0, x.bmp.width, hh, 0, 0, x.bmp.width, hh);
+      const pb = await new Promise(res => cc.toBlob(res, 'image/jpeg', 0.88));
+      if (!pb){ okCut = false; break; }
+      pages.push(pb);
+    }
+    if (!okCut) pages.push(x.b);
+    try { x.bmp.close(); } catch(e){}
+  }
+  return pages;
+}
+
+/* ---------- capítulo ---------- */
+async function openChapter(num){
+  const ch = CHAPTERS.find(c => c.num === num);
+  if (!ch) return;
+  stopAll();
+  state.chap = ch; state.pages = []; state.pageIndex = 0;
+  $('#home').style.display = 'none';
+  $('#reader').style.display = 'block';
+  $('#trans').innerHTML = '';
+  $('#boxes').innerHTML = '';
+  $('#pageImg').removeAttribute('src');
+  $('#loader').style.display = 'block';
+  window.scrollTo(0, 0);
+  try {
+    const n = ch.strips.length;
+    const blobs = [];
+    for (let i = 0; i < n; i++){
+      $('#loadTxt').textContent = 'Descargando imágenes ' + (i+1) + '/' + n + '…';
+      blobs.push(await fetchBlob(ch.strips[i]));
+    }
+    $('#loadTxt').textContent = 'Preparando páginas…';
+    await sleep(30);
+    const parts = await splitStripBlob(blobs);
+    state.pages = parts.map((b, i) => ({
+      url: URL.createObjectURL(b),
+      lines: ((ch.pages && ch.pages[i]) || []).map(l => Object.assign({}, l)),
+    }));
+    $('#loader').style.display = 'none';
+    goToPage(0);
+    try { localStorage.setItem('sl-last', String(num)); } catch(e){}
+  } catch(e){
+    $('#loader').style.display = 'none';
+    $('#status').textContent = 'Error: ' + (e && e.message || e);
+  }
+}
+function goToPage(i){
+  if (!state.pages.length) return;
+  stopAll();
+  if (i < 0) i = 0;
+  if (i >= state.pages.length) i = state.pages.length - 1;
+  state.pageIndex = i;
+  state.lines = state.pages[i].lines || [];
+  state.lineIndex = -1;
+  renderStage();
+  renderTranscript();
+  window.scrollTo(0, 0);
+}
+function renderStage(){
+  const p = state.pages[state.pageIndex];
+  const img = $('#pageImg');
+  if (p && p.url && img.getAttribute('src') !== p.url) img.setAttribute('src', p.url);
+  $('#pageTag').textContent = (state.chap ? ('Cap. ' + state.chap.num + (state.chap.title ? ' — ' + state.chap.title : '')) : '') +
+    ' · Página ' + (state.pageIndex+1) + '/' + state.pages.length;
+  renderBoxes();
+}
+function renderBoxes(){
+  const box = $('#boxes'); box.innerHTML = '';
+  if (!state.showBoxes) return;
+  for (const l of state.lines){
+    if (!l.box || l.box.length !== 4) continue;
+    const d = document.createElement('div');
+    d.className = 'bubble';
+    d.style.left = (l.box[0]*100) + '%';
+    d.style.top = (l.box[1]*100) + '%';
+    d.style.width = (l.box[2]*100) + '%';
+    d.style.height = (l.box[3]*100) + '%';
+    box.appendChild(d);
+  }
+}
+function lineText(l){
+  if (state.mode === 'original') return l.text || l.translation || '';
+  return l.translation || l.text || '';
+}
+function renderTranscript(){
+  const t = $('#trans'); t.innerHTML = '';
+  state.lines.forEach((l, i) => {
+    const d = document.createElement('div');
+    d.className = 'line' + (i === state.lineIndex ? ' active' : '');
+    d.innerHTML = (l.speaker ? '<span class="spk">' + escapeHtml(l.speaker) + '</span>' : '') + escapeHtml(lineText(l));
+    d.onclick = () => { speakFrom(i); };
+    t.appendChild(d);
+  });
+  $('#status').textContent = state.lines.length ? (state.lines.length + ' líneas') : 'Esta página no tiene diálogo.';
+}
+function setActive(i){
+  state.lineIndex = i;
+  const els = $('#trans').children;
+  for (let k = 0; k < els.length; k++) els[k].classList.toggle('active', k === i);
+  if (els[i]) els[i].scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+
+/* ---------- voz (del propio dispositivo) ---------- */
+function pickVoice(){
+  try {
+    const vs = speechSynthesis.getVoices() || [];
+    const es = vs.filter(v => /^es/i.test(v.lang || ''));
+    if (es.length) return es[0];
+    return vs[0] || null;
+  } catch(e){ return null; }
+}
+if ('speechSynthesis' in window){
+  try {
+    speechSynthesis.onvoiceschanged = () => { state.voice = pickVoice(); };
+    state.voice = pickVoice();
+  } catch(e){}
+}
+function speakText(text){
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window)){ resolve(); return; }
+    try { speechSynthesis.cancel(); } catch(e){}
+    const u = new SpeechSynthesisUtterance(text);
+    if (state.voice) u.voice = state.voice;
+    u.lang = (state.voice && state.voice.lang) || 'es-ES';
+    u.rate = state.rate || 1;
+    let done = false;
+    const fin = () => { if (!done){ done = true; resolve(); } };
+    u.onend = fin; u.onerror = fin;
+    setTimeout(fin, Math.max(4000, text.length * 350));
+    try { speechSynthesis.speak(u); } catch(e){ fin(); }
+  });
+}
+function stopAll(){
+  state.gen++;
+  state.playing = false;
+  try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch(e){}
+  $('#playBtn').textContent = '▶ Escuchar';
+}
+async function speakFrom(i){
+  const gen = ++state.gen;
+  stopAll(); state.gen = gen;
+  if (!state.lines.length) return;
+  state.playing = true;
+  $('#playBtn').textContent = '⏸ Detener';
+  for (let k = i; k < state.lines.length; k++){
+    if (state.gen !== gen || !state.playing) break;
+    setActive(k);
+    const t = lineText(state.lines[k]);
+    if (t && t.trim()) await speakText(t);
+    if (state.gen !== gen || !state.playing) break;
+    await sleep(250);
+  }
+  if (state.gen === gen){
+    state.playing = false;
+    $('#playBtn').textContent = '▶ Escuchar';
+    // avanza a la página siguiente solo
+    if (state.pageIndex < state.pages.length - 1){
+      goToPage(state.pageIndex + 1);
+      speakFrom(0);
+    }
+  }
+}
+
+/* ---------- controles ---------- */
+$('#backBtn').onclick = $('#backLink').onclick = () => {
+  stopAll();
+  for (const p of state.pages){ try { URL.revokeObjectURL(p.url); } catch(e){} }
+  state.pages = []; state.chap = null;
+  $('#reader').style.display = 'none';
+  $('#home').style.display = 'block';
+};
+$('#prevBtn').onclick = () => goToPage(state.pageIndex - 1);
+$('#nextBtn').onclick = () => goToPage(state.pageIndex + 1);
+$('#playBtn').onclick = () => {
+  if (state.playing){ stopAll(); setActive(-1); renderTranscript(); return; }
+  speakFrom(state.lineIndex >= 0 ? state.lineIndex : 0);
+};
+$('#modeSel').onchange = e => {
+  state.mode = e.target.value;
+  try { localStorage.setItem('sl-mode', state.mode); } catch(err){}
+  renderTranscript();
+};
+$('#rateSel').onchange = e => {
+  state.rate = parseFloat(e.target.value) || 1;
+  try { localStorage.setItem('sl-rate', String(state.rate)); } catch(err){}
+};
+$('#boxBtn').onclick = () => { state.showBoxes = !state.showBoxes; renderBoxes(); };
+document.addEventListener('keydown', e => {
+  if ($('#reader').style.display !== 'block') return;
+  if (e.key === 'ArrowLeft') goToPage(state.pageIndex - 1);
+  if (e.key === 'ArrowRight') goToPage(state.pageIndex + 1);
+  if (e.key === ' '){ e.preventDefault(); $('#playBtn').click(); }
+});
+
+initHome();
+</script>
+</body>
+</html>
