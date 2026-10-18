@@ -100,13 +100,22 @@
     background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:11px 20px;
     border-radius:999px;box-shadow:var(--shadow);opacity:0;transition:.25s;z-index:50;pointer-events:none;max-width:90vw}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.62);display:grid;place-items:center;z-index:60;padding:16px}
+  .modalCard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto}
+  .modalCard h3{margin:0 0 12px}
+  .fRow{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;font-size:13px}
+  .fRow input,.fRow select,.fRow textarea{font:inherit;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%}
+  #admUrl{min-height:64px;resize:vertical}
+  .mBtns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+  .admRow{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:13px}
+  .admRow .t{flex:1}
   @media (max-width:640px){.cdCover{width:140px}}
 </style>
 </head>
 <body>
 <header>
   <div class="brand" id="brandHome"><span class="logo">M</span> MANGA LECTOR <span class="ai">IA</span></div>
-  <nav><button class="tab active" id="tabCat">Catálogo</button></nav>
+  <nav><button class="tab active" id="tabCat">Catálogo</button><button class="tab" id="adminBtn" title="Modo administrador">🔒</button></nav>
 </header>
 <div class="wrap">
 
@@ -167,10 +176,32 @@
 
 </div>
 <div id="toast"></div>
+<div class="modal" id="loginModal" hidden>
+  <div class="modalCard">
+    <h3>🔒 Modo administrador</h3>
+    <div class="fRow">Contraseña<input type="password" id="adminPass" autocomplete="off"></div>
+    <div class="mBtns"><button id="loginCancel">Cancelar</button><button class="primary" id="loginGo">Entrar</button></div>
+  </div>
+</div>
+<div class="modal" id="adminModal" hidden>
+  <div class="modalCard">
+    <h3>🔓 Administración <span style="font-size:11px;color:var(--dim)">(este dispositivo)</span></h3>
+    <div class="fRow">Manga
+      <select id="admManga"><option value="0">Tensei Shitara Slime Datta Ken</option><option value="1">La Vida Después de la Muerte</option></select>
+    </div>
+    <div class="fRow">Enlace del visor o imágenes directas (una por línea)<textarea id="admUrl" placeholder="https://zonatmo.org/view_uploads/…"></textarea></div>
+    <div class="fRow">Título (opcional)<input id="admTitle" placeholder="Cap. 31"></div>
+    <div class="mBtns"><button class="primary" id="admAdd">+ Añadir capítulo</button></div>
+    <h3 style="margin-top:16px">Capítulos</h3>
+    <div id="admList"></div>
+    <div class="mBtns"><button id="admExport">⬇ Exportar cambios</button><button id="admLogout">Salir</button><button id="admClose">Cerrar</button></div>
+  </div>
+</div>
 
 <script src="data.js"></script>
 <script>
 'use strict';
+const ADMIN_HASH = 'dba35cd7386af3d583041b9ae0ea20cd9c29d2fd9a0b79f1cd5828a48eb0e8e3';
 const META_SLIME = {
   rating: 9.2, demographic: 'Shounen', estado: 'PUBLICÁNDOSE', cover: 'cover.jpg',
   genres: ['Acción','Aventura','Magia','Reencarnación'],
@@ -206,10 +237,22 @@ const state = {
   voice: null,
 };
 function mangaList(){
-  return [
-    {title: MANGA.title, meta: META_SLIME, chapters: CHAPTERS},
+  const ov = getOv();
+  const base = [
+    {title: MANGA.title, meta: META_SLIME, chapters: CHAPTERS.slice()},
     {title: 'La Vida Después de la Muerte', meta: META_VIDA, chapters: []},
   ];
+  base.forEach((m, idx) => {
+    const hid = (ov.hidden || {})[idx] || {};
+    const tit = (ov.titles || {})[idx] || {};
+    m.chapters = m.chapters
+      .filter(c => !hid[c.num])
+      .map(c => (tit[c.num] ? Object.assign({}, c, {title: tit[c.num]}) : c));
+    for (const a of (ov.added || [])){
+      if (a.manga === idx && !hid[a.num]) m.chapters.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
+    }
+  });
+  return base;
 }
 function curManga(){ return mangaList()[state.manga]; }
 function show(view){
@@ -290,7 +333,7 @@ function renderChapList(){
     const done = !!reads[readKey(c.num)];
     row.innerHTML = '<button class="readToggle' + (done ? ' done' : '') + '" title="Marcar leído">' + (done ? '✅' : '⬜') + '</button>' +
       '<div class="t"><b>Capítulo ' + c.num + '</b>' + (c.title ? ' — ' + escapeHtml(c.title) : '') + '</div>' +
-      '<div class="d">' + escapeHtml(c.date || '') + ' · ' + (c.pages||[]).length + ' pág.</div>' +
+      '<div class="d">' + escapeHtml(c.date || '') + ' · ' + ((c.pages||[]).length || c.stripCount || 0) + ' pág.</div>' +
       '<div class="rowBtns"><button class="smallBtn hearBtn">🔊 Escuchar</button><button class="smallBtn openBtn">Leer online</button><button class="smallBtn editBtn">Editar</button><button class="smallBtn delBtn">✕</button></div>';
     row.querySelector('.readToggle').onclick = ev => {
       ev.stopPropagation();
@@ -623,6 +666,163 @@ async function speakFrom(i){
   }
 }
 
+/* ---------- modo administrador (solo este dispositivo) ---------- */
+function getOv(){ try { return JSON.parse(localStorage.getItem('sl-admin-ov') || '{}') || {}; } catch(e){ return {}; } }
+function saveOv(o){ try { localStorage.setItem('sl-admin-ov', JSON.stringify(o)); } catch(e){ toast('No se pudo guardar'); } }
+function isAdmin(){ try { return sessionStorage.getItem('sl-admin') === '1'; } catch(e){ return false; } }
+async function sha256hex(s){
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function lockLeft(){
+  try {
+    const t = parseInt(localStorage.getItem('sl-admin-lock') || '0', 10);
+    return Math.max(0, t - Date.now());
+  } catch(e){ return 0; }
+}
+async function tryLogin(){
+  const left = lockLeft();
+  if (left > 0){ toast('Bloqueado. Espera ' + Math.ceil(left/1000) + ' s'); return; }
+  const pw = $('#adminPass').value || '';
+  let n = 0;
+  try { n = parseInt(sessionStorage.getItem('sl-admin-n') || '0', 10); } catch(e){}
+  let hex = '';
+  try { hex = await sha256hex(pw); } catch(e){}
+  if (hex && hex === ADMIN_HASH){
+    try { sessionStorage.setItem('sl-admin', '1'); sessionStorage.setItem('sl-admin-n', '0'); } catch(e){}
+    $('#adminPass').value = '';
+    $('#loginModal').hidden = true;
+    updateAdminBtn();
+    openAdminPanel();
+    toast('Sesión de administrador');
+  } else {
+    n++;
+    try { sessionStorage.setItem('sl-admin-n', String(n)); } catch(e){}
+    if (n >= 5){
+      try { localStorage.setItem('sl-admin-lock', String(Date.now() + 60000)); sessionStorage.setItem('sl-admin-n', '0'); } catch(e){}
+      toast('Demasiados intentos. Bloqueado 1 minuto.');
+    } else toast('Contraseña incorrecta (' + n + '/5)');
+  }
+}
+function updateAdminBtn(){ $('#adminBtn').textContent = isAdmin() ? '🔓' : '🔒'; }
+function openAdminPanel(){
+  if (!isAdmin()){ $('#loginModal').hidden = false; setTimeout(()=>{ try{$('#adminPass').focus();}catch(e){} }, 50); return; }
+  renderAdminList();
+  $('#adminModal').hidden = false;
+}
+function renderAdminList(){
+  const ov = getOv();
+  const box = $('#admList'); box.innerHTML = '';
+  const mid = parseInt($('#admManga').value || '0', 10);
+  const nums = mangaList()[mid].chapters.map(c=>c.num);
+  const allNums = {};
+  for (const n of nums.concat((ov.added||[]).filter(a=>a.manga===mid).map(a=>a.num))) allNums[n] = true;
+  Object.keys(allNums).map(Number).sort((a,b)=>b-a).forEach(num => {
+    const hid = !!((ov.hidden||{})[mid] || {})[num];
+    const base = CHAPTERS.find(c=>c.num===num);
+    const add = (ov.added||[]).find(a=>a.manga===mid && a.num===num);
+    const row = document.createElement('div');
+    row.className = 'admRow';
+    row.innerHTML = '<div class="t"><b>Cap. ' + num + '</b> ' + escapeHtml((add && add.title) || (((ov.titles||{})[mid]||{})[num]) || (base && base.title) || '') + (add ? ' <span class="pill">añadido aquí</span>' : '') + (hid ? ' <span class="pill">oculto</span>' : '') + '</div>';
+    const mkBtn = (txt, fn) => { const b = document.createElement('button'); b.className = 'smallBtn'; b.textContent = txt; b.onclick = fn; row.appendChild(b); };
+    mkBtn(hid ? 'Mostrar' : 'Ocultar', () => {
+      const o = getOv(); o.hidden = o.hidden || {}; o.hidden[mid] = o.hidden[mid] || {};
+      if (hid) delete o.hidden[mid][num]; else o.hidden[mid][num] = 1;
+      saveOv(o); renderAdminList(); openDetailRefresh();
+    });
+    mkBtn('Título', () => {
+      const cur = (((getOv().titles||{})[mid]||{})[num]) || (base && base.title) || (add && add.title) || '';
+      const t = prompt('Título del capítulo ' + num + ':', cur || '');
+      if (t === null) return;
+      const o = getOv();
+      if (add){ add.title = t; }
+      else { o.titles = o.titles || {}; o.titles[mid] = o.titles[mid] || {}; if (t) o.titles[mid][num] = t; else delete o.titles[mid][num]; }
+      saveOv(o); renderAdminList(); openDetailRefresh();
+    });
+    box.appendChild(row);
+  });
+}
+function openDetailRefresh(){ if (!$('#detailView').hidden) openDetail(); else { renderCards($('#catSearch').value); } }
+const PAGE_JUNK_RE2 = /logo|icon|avatar|banner|advert|\/ads[\/\.]|favicon|sprite|badge|emoji|\.svg(\?|$)/i;
+async function stripsFromViewer(pageUrl){
+  async function getText(u){
+    try { const r = await fetch(u, {referrerPolicy:'no-referrer'}); if (r.ok) return await r.text(); } catch(e){}
+    try { const r2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(u)); if (r2.ok) return await r2.text(); } catch(e){}
+    return null;
+  }
+  let html = await getText(pageUrl);
+  if (!html) html = await getText('https://api.allorigins.win/raw?url=' + encodeURIComponent(pageUrl));
+  if (!html) throw new Error('No se pudo leer el enlace');
+  const seen = new Set(), out = [];
+  const push = u => {
+    if (!u || out.length >= 80) return;
+    u = u.trim();
+    if (/^data:/i.test(u) || u.length > 2000) return;
+    let abs;
+    try { abs = new URL(u, pageUrl).href; } catch(e){ return; }
+    if (!/^https?:\/\//i.test(abs)) return;
+    const path = abs.split(/[?#]/)[0];
+    if (!/\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(path)) return;
+    if (PAGE_JUNK_RE2.test(path)) return;
+    const k = abs.toLowerCase();
+    if (seen.has(k)) return;
+    seen.add(k);
+    out.push(abs);
+  };
+  const imgRe = /<img\b[^>]*>/gi;
+  let m;
+  while ((m = imgRe.exec(html))){
+    const tag = m[0];
+    const ds = /(?:data-src|data-lazy|data-original)\s*=\s*["']([^"']+)["']/i.exec(tag);
+    if (ds){ push(ds[1]); continue; }
+    const s = /src\s*=\s*["']([^"']+)["']/i.exec(tag);
+    if (s) push(s[1]);
+  }
+  if (!out.length) throw new Error('No se encontraron imágenes en ese enlace');
+  return out;
+}
+async function adminAddChapter(){
+  const mid = parseInt($('#admManga').value || '0', 10);
+  const raw = ($('#admUrl').value || '').trim();
+  const title = ($('#admTitle').value || '').trim();
+  if (!raw){ toast('Pega el enlace o las imágenes'); return; }
+  toast('Leyendo…');
+  try {
+    let strips = [];
+    const direct = raw.match(/https?:\/\/[^\s<>"']+/gi) || [];
+    const isViewer = direct.length === 1 && /zonatmo\.org\/view_uploads\//i.test(direct[0]);
+    if (isViewer){
+      try { strips = await stripsFromViewer(direct[0]); }
+      catch(e){
+        toast('Enlace protegido: añade ese capítulo desde tu lector original');
+        return;
+      }
+    } else {
+      strips = direct.filter(u => /\.(png|jpe?g|webp|gif|bmp|avif)(\?|#|$)/i.test(u.split(/[?#]/)[0]) || /zonatmo/i.test(u));
+      if (!strips.length) throw new Error('No hay enlaces de imagen válidos');
+    }
+    const ov = getOv();
+    const nums = mangaList()[mid].chapters.map(c=>c.num);
+    const next = Math.max.apply(null, [0].concat(nums)) + 1;
+    ov.added = ov.added || [];
+    ov.added.push({manga:mid, num:next, title:title || ('Cap. ' + next), date:new Date().toISOString().slice(0,10), strips});
+    saveOv(ov);
+    $('#admUrl').value = ''; $('#admTitle').value = '';
+    renderAdminList(); openDetailRefresh();
+    toast('Capítulo ' + next + ' añadido (sin diálogo: se lee sin voz)');
+  } catch(e){ toast('Error: ' + (e && e.message || e)); }
+}
+function adminExport(){
+  const ov = getOv();
+  const blob = new Blob([JSON.stringify(ov, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cambios-admin.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast('Archivo descargado. Envíamelo para publicarlo para todos.');
+}
+
 /* ---------- controles ---------- */
 $('#brandHome').onclick = $('#tabCat').onclick = () => {
   stopAll();
@@ -678,6 +878,16 @@ document.addEventListener('keydown', e => {
   if (e.key === ' '){ e.preventDefault(); $('#playBtn').click(); }
 });
 
+$('#adminBtn').onclick = () => { if (isAdmin()) openAdminPanel(); else { $('#loginModal').hidden = false; setTimeout(()=>{ try{$('#adminPass').focus();}catch(e){} }, 50); } };
+$('#loginCancel').onclick = () => { $('#loginModal').hidden = true; $('#adminPass').value = ''; };
+$('#loginGo').onclick = tryLogin;
+$('#adminPass').onkeydown = e => { if (e.key === 'Enter') tryLogin(); };
+$('#admAdd').onclick = adminAddChapter;
+$('#admExport').onclick = adminExport;
+$('#admClose').onclick = () => { $('#adminModal').hidden = true; };
+$('#admLogout').onclick = () => { try { sessionStorage.removeItem('sl-admin'); } catch(e){} $('#adminModal').hidden = true; updateAdminBtn(); toast('Sesión cerrada'); };
+$('#admManga').onchange = renderAdminList;
+updateAdminBtn();
 initHome();
 </script>
 </body>
