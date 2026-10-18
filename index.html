@@ -84,10 +84,10 @@
   .bubble{position:absolute;border:2px solid rgba(255,59,92,.85);border-radius:6px;background:rgba(255,59,92,.10);pointer-events:none}
   .bubble.active{border-color:#ffd75e;background:rgba(255,215,94,.14)}
   #pageTag{color:var(--dim);margin:6px 0;font-size:.9em}
-  .thumbs{display:flex;gap:8px;overflow-x:auto;padding:12px 2px;scrollbar-width:thin}
+  .thumbs{display:flex;gap:8px;overflow-x:auto;padding:12px;scrollbar-width:thin;background:rgba(10,12,18,.72);border:1px solid var(--line);border-radius:14px;margin-top:10px;backdrop-filter:blur(8px)}
   .thumbs img{height:90px;border-radius:8px;border:2px solid var(--line);cursor:pointer;object-fit:cover;flex-shrink:0}
   .thumbs img.active{border-color:var(--accent)}
-  #trans{display:flex;flex-direction:column;gap:6px;margin-top:12px;max-width:720px}
+  #trans{display:flex;flex-direction:column;gap:6px;margin-top:12px;max-width:720px;background:rgba(10,12,18,.78);border:1px solid var(--line);border-radius:14px;padding:12px;backdrop-filter:blur(8px)}
   .line{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:.95em;line-height:1.4}
   .line:hover{border-color:var(--accent)}
   .line.active{border-color:var(--accent);background:rgba(255,59,92,.10)}
