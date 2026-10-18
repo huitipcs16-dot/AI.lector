@@ -148,6 +148,7 @@
     <div id="contSec" hidden><button id="contBtn" class="primary"></button></div>
     <div class="catGrid" id="catGrid"></div>
     <h3 id="histHead" hidden style="color:#7fb3ff;margin:18px 0 4px">🕘 Historial</h3>
+    <div style="margin:0 0 4px;text-align:right"><button class="smallBtn" id="histClear" hidden>Borrar todo</button></div>
     <div id="histList"></div>
   </div>
 
@@ -509,6 +510,7 @@ function renderHist(){
   const box = $('#histList'); box.innerHTML = '';
   const h = getHist().slice(0, 8);
   $('#histHead').hidden = !h.length;
+  $('#histClear').hidden = !h.length;
   if (!h.length) return;
   const ml = mangaList(), pm = getProgMap();
   for (const e of h){
@@ -517,11 +519,18 @@ function renderHist(){
     row.className = 'histRow';
     const pg = pm[e.m + ':' + e.c];
     row.innerHTML = '<div class="t"><b>' + escapeHtml(ml[e.m].title) + '</b> · Cap. ' + e.c +
-      (typeof pg === 'number' ? ' · pág. ' + (pg+1) : '') + '</div><div class="d">' + timeAgo(e.t) + '</div>';
+      (typeof pg === 'number' ? ' · pág. ' + (pg+1) : '') + '</div><div class="d">' + timeAgo(e.t) + '</div>' +
+      '<button class="smallBtn histDel" title="Borrar">✕</button>';
     row.onclick = ((m, c) => () => { state.manga = m; const p = getProgMap()[m + ':' + c]; openChapter(c, {startPage: typeof p === 'number' ? p : 0}); })(e.m, e.c);
+    row.querySelector('.histDel').onclick = ((m, c) => ev => {
+      ev.stopPropagation();
+      try { localStorage.setItem('sl-hist', JSON.stringify(getHist().filter(x => !(x.m === m && x.c === c)))); } catch(_){}
+      renderHist();
+    })(e.m, e.c);
     box.appendChild(row);
   }
 }
+$('#histClear').onclick = () => { try { localStorage.removeItem('sl-hist'); } catch(_){} renderHist(); toast('Historial borrado'); };
 function getReads(){ try { return JSON.parse(localStorage.getItem('sl-reads') || '{}') || {}; } catch(e){ return {}; } }
 function setReads(r){ try { localStorage.setItem('sl-reads', JSON.stringify(r)); } catch(e){} }
 function openDetail(){
