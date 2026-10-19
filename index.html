@@ -36,13 +36,25 @@
   :root[data-theme="light"] #trans{background:rgba(255,255,255,.85)}
   :root[data-theme="light"] .chapRow:hover{background:rgba(0,0,0,.04)}
   :root[data-theme="light"] .histRow:hover{background:rgba(0,0,0,.04)}
-  .listCard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-  .listCard h4{margin:0 0 8px}
+  .listCard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}  .listCard h4{margin:0 0 8px}
   .newsGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
   .newsCard{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer}
   .newsCard img{width:100%;height:200px;object-fit:cover;display:block}
   .newsCard .t{padding:8px;font-size:12px;font-weight:700}
   .newsCard .s{padding:0 8px 8px;font-size:12px;color:var(--dim)}
+  .comWrap{display:flex;gap:16px;align-items:flex-start}
+  .comMain{flex:1;min-width:0}
+  .comMenu{width:190px;flex-shrink:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;position:sticky;top:130px}
+  .comMenu button{display:block;width:100%;text-align:left;background:transparent;border-color:transparent;margin-bottom:4px}
+  .comMenu button.active{background:var(--panel2);border-color:var(--line)}
+  .banner{background:linear-gradient(120deg,#2456c6,#5a3fb0);border-radius:14px;padding:22px;margin-bottom:14px;color:#fff}
+  .banner b{font-size:12px;letter-spacing:1px;opacity:.8}
+  .banner h2{margin:4px 0;font-size:22px}
+  .banner p{margin:0;opacity:.9;font-size:13px}
+  .trendRow{padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .trendRow b{color:var(--accent2)}
+  .normRow{font-size:12px;padding:3px 0;color:var(--dim)}
+  @media (max-width:900px){.comMenu,.libSide2{display:none}}
   .brand{font-weight:900;letter-spacing:2px;font-size:17px;display:flex;align-items:center;gap:9px;cursor:pointer}
   .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#ff7a45);
     display:grid;place-items:center;font-size:16px;color:#fff;font-weight:900;overflow:hidden;flex-shrink:0}
@@ -171,7 +183,7 @@
 <body>
 <header>
   <div class="brand" id="brandHome"><span class="logo"><img src="logo.jpg" alt="AILector" onerror="this.remove()">A</span> AILector</div>
-  <nav><button class="tab active" id="tabLib">Biblioteca</button><button class="tab" id="tabLists">Listas</button><button class="tab" id="tabNews">Noticias</button><button class="tab" id="adminBtn" title="Modo administrador">🔒</button></nav>
+  <nav><button class="tab active" id="tabLib">Biblioteca</button><button class="tab" id="tabCom">Comunidad</button><button class="tab" id="tabLists">Listas</button><button class="tab" id="tabNews">Noticias</button><button class="tab" id="adminBtn" title="Modo administrador">🔒</button></nav>
   <div class="hRight">
     <button class="tab" id="themeBtn" title="Tema claro / oscuro">☀</button>
     <button class="tab" id="authInBtn">Acceder</button>
@@ -197,8 +209,32 @@
     <div id="histList"></div>
   </div>
 
-  <div id="listsView" class="panel" hidden>
-    <div class="catBar">
+  <div id="comView" class="panel" hidden>
+    <div class="comWrap">
+      <div class="comMenu">
+        <button class="active" data-cm="feed">🏠 Feed General</button>
+        <button data-cm="subidas">⬆ Últimas Subidas</button>
+        <button data-cm="biblio">📚 Mi Biblioteca</button>
+      </div>
+      <div class="comMain">
+        <div class="banner"><b>COMUNIDAD AILECTOR</b><h2>¡Hola, lector! 👋</h2><p>Comparte, opina y conecta con la comunidad manga.</p></div>
+        <div id="comFeed">
+          <div class="listCard"><h4>⬆ Últimas subidas</h4><div id="comSubidas"></div></div>
+          <div class="listCard"><h4>💬 Feed General</h4><div id="utterBox"></div></div>
+        </div>
+      </div>
+      <aside class="libSide libSide2"><h4>🔥 Tendencias</h4>
+        <div class="trendRow"><b>1.</b> #recomendación</div>
+        <div class="trendRow"><b>2.</b> #pregunta</div>
+        <div class="trendRow"><b>3.</b> #slime</div>
+        <h4 style="margin-top:14px">📜 Normas</h4>
+        <div class="normRow">✓ Respeta a todos</div>
+        <div class="normRow">✓ Nada de spam</div>
+        <div class="normRow">✓ Contenido de manga/anime</div>
+      </aside>
+    </div>
+  </div>
+  <div id="listsView" class="panel" hidden>    <div class="catBar">
       <input id="newListName" placeholder="Nombre de la lista…" style="flex:1">
       <button id="newListBtn" class="primary">+ Crear lista</button>
     </div>
@@ -497,7 +533,9 @@ function show(view){
   $('#readerView').hidden = view !== 'reader';
   $('#listsView').hidden = view !== 'lists';
   $('#newsView').hidden = view !== 'news';
+  $('#comView').hidden = view !== 'com';
   $('#tabLib').classList.toggle('active', view === 'home' || view === 'detail');
+  $('#tabCom').classList.toggle('active', view === 'com');
   $('#tabLists').classList.toggle('active', view === 'lists');
   $('#tabNews').classList.toggle('active', view === 'news');
   window.scrollTo(0, 0);
@@ -1349,6 +1387,7 @@ $('#brandHome').onclick = $('#tabLib').onclick = () => {
   show('home');
 };
 $('#tabLists').onclick = () => { stopAll(); renderLists(); show('lists'); };
+$('#tabCom').onclick = () => { stopAll(); renderCom(); show('com'); loadUtter(); };
 $('#tabNews').onclick = () => { stopAll(); show('news'); loadNews(); };
 $('#backBtn').onclick = () => {
   stopAll();
@@ -1865,6 +1904,44 @@ async function loadNews(){
     $('#newsManga').innerHTML = ''; $('#newsManga').appendChild(gm);
     if (!ga.children.length && !gm.children.length) showErr();
   } catch(e){ showErr(); }
+}
+/* ---------- comunidad ---------- */
+function renderCom(){
+  const box = $('#comSubidas'); if (!box) return;
+  box.innerHTML = '';
+  const ml = mangaList(), all = [];
+  ml.forEach((m, i) => m.chapters.forEach(c => all.push({i, c})));
+  all.sort((a,b)=>b.c.num - a.c.num);
+  all.slice(0, 8).forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'histRow';
+    row.innerHTML = '<div class="t"><b>' + escapeHtml(ml[e.i].title) + '</b> · Cap. ' + e.c.num +
+      (e.c.title ? ' — ' + escapeHtml(e.c.title) : '') + '</div><div class="d">Leer →</div>';
+    row.onclick = ((m, c) => () => { state.manga = m; const p = getProgMap()[m + ':' + c]; openChapter(c, {startPage: typeof p === 'number' ? p : 0}); })(e.i, e.c.num);
+    box.appendChild(row);
+  });
+  if (!all.length) box.innerHTML = '<div style="color:var(--dim);font-size:13px">Aún no hay capítulos.</div>';
+}
+document.querySelectorAll('.comMenu button').forEach(b => { b.onclick = () => {
+  document.querySelectorAll('.comMenu button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  const v = b.dataset.cm;
+  if (v === 'biblio'){ renderLists(); show('lists'); }
+  else { show('com'); if (v === 'subidas'){ const el = $('#comSubidas'); if (el && el.scrollIntoView) el.scrollIntoView({block:'start'}); } }
+}; });
+let utterLoaded = false;
+function loadUtter(){
+  if (utterLoaded) return; utterLoaded = true;
+  try {
+    const s = document.createElement('script');
+    s.src = 'https://utteranc.es/client.js';
+    s.setAttribute('repo', 'huitipcs16-dot/AI.lector');
+    s.setAttribute('issue-term', 'pathname');
+    s.setAttribute('theme', 'github-dark');
+    s.setAttribute('crossorigin', 'anonymous');
+    s.async = true;
+    $('#utterBox').appendChild(s);
+  } catch(e){}
 }
 updateAdminBtn();
 applyReadPrefs();
