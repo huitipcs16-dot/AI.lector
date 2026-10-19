@@ -188,6 +188,10 @@
       <button id="newMangaBtn">+ Nuevo manga</button>
     </div>
     <div id="contSec" hidden style="display:flex;gap:8px"><button id="contBtn" class="primary" style="flex:1"></button><button id="contDismiss" title="Quitar">✕</button></div>
+    <div class="libWrap">
+      <div class="libMain" id="catSections"></div>
+      <aside class="libSide"><h4>🏆 Top lectura</h4><div id="topRead"></div></aside>
+    </div>
     <h3 id="histHead" hidden style="color:#7fb3ff;margin:18px 0 4px">🕘 Historial</h3>
     <div style="margin:0 0 4px;text-align:right"><button class="smallBtn" id="histClear" hidden>Borrar todo</button></div>
     <div id="histList"></div>
@@ -551,8 +555,54 @@ function mangaCard(m, idx, favs){
   card.onclick = () => { state.manga = idx; openDetail(); };
   return card;
 }
-function renderCards(q){ /* catálogo retirado */ }
-function renderTop(){ /* top retirado */ }
+function renderCards(q){
+  const secs = $('#catSections'); if (!secs) return;
+  secs.innerHTML = '';
+  const gz = $('#genreSel').value;
+  const favs = getFavs();
+  const list = [];
+  mangaList().forEach((m, idx) => {
+    if (!cardMatch(m, q)) return;
+    if (gz && !(m.meta.genres || []).includes(gz)) return;
+    list.push({m, idx});
+  });
+  if (!list.length){ secs.innerHTML = '<p style="color:var(--dim)">Sin resultados.</p>'; renderTop(); return; }
+  const pop = list.slice().sort((a,b)=>b.m.meta.rating - a.m.meta.rating);
+  const h0 = document.createElement('div');
+  h0.className = 'secHead'; h0.textContent = '🔥 Populares';
+  secs.appendChild(h0);
+  const g0 = document.createElement('div');
+  g0.className = 'catGrid';
+  pop.forEach(e => g0.appendChild(mangaCard(e.m, e.idx, favs)));
+  secs.appendChild(g0);
+  const groups = {};
+  list.forEach(e => { const d = e.m.meta.demographic || 'Otros'; (groups[d] = groups[d] || []).push(e); });
+  Object.keys(groups).sort().forEach(d => {
+    const h = document.createElement('div');
+    h.className = 'secHead'; h.textContent = '❤ P: ' + d;
+    secs.appendChild(h);
+    const g = document.createElement('div');
+    g.className = 'catGrid';
+    groups[d].forEach(e => g.appendChild(mangaCard(e.m, e.idx, favs)));
+    secs.appendChild(g);
+  });
+  renderTop();
+}
+function renderTop(){
+  const box = $('#topRead'); if (!box) return;
+  let s = {opens:{}};
+  try { s = JSON.parse(localStorage.getItem('sl-stats') || '{"opens":{}}'); } catch(e){}
+  const ml = mangaList();
+  const agg = {};
+  Object.keys(s.opens || {}).forEach(k => {
+    const m = +k.split(':')[0];
+    if (ml[m]) agg[m] = (agg[m]||0) + s.opens[k];
+  });
+  const top = Object.keys(agg).sort((a,b)=>agg[b]-agg[a]).slice(0,5);
+  box.innerHTML = top.length ? top.map((m, i) =>
+    '<div class="topRow"><span class="n">' + (i+1) + '.</span><span>' + escapeHtml(ml[m].title) + '</span><span class="c">' + agg[m] + '</span></div>'
+  ).join('') : '<div style="font-size:12px;color:var(--dim)">Lee algo y aparecerá aquí.</div>';
+}
 function getProgMap(){ try { return JSON.parse(localStorage.getItem('sl-progmap') || '{}') || {}; } catch(e){ return {}; } }
 function renderCont(){
   const sec = $('#contSec');
