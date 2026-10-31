@@ -36,6 +36,15 @@
   :root[data-theme="light"] #trans{background:rgba(255,255,255,.85)}
   :root[data-theme="light"] .chapRow:hover{background:rgba(0,0,0,.04)}
   :root[data-theme="light"] .histRow:hover{background:rgba(0,0,0,.04)}
+  .bgDots{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 8px}
+  .bgDots button{width:30px;height:30px;border-radius:50%;padding:0;border:2px solid #555}
+  .bgBtn{padding:6px 10px;border-color:var(--accent);box-shadow:0 0 12px rgba(255,59,92,.55);animation:bgGlow 2s infinite alternate}
+  .bgBtn svg{display:block}
+  @keyframes bgGlow{to{box-shadow:0 0 22px rgba(255,180,84,.85)}}
+  .patRow{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}
+  #bgPicker{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px}
+  #bgPicker .lbl{color:var(--dim);font-size:12px;margin:8px 0 4px;font-weight:700}
+  #bgCurrent{font-size:12px;color:var(--dim)}
   .listCard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}  .listCard h4{margin:0 0 8px}
   .newsGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
   .newsCard{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer}
@@ -197,7 +206,15 @@
     <div class="catBar">
       <input id="catSearch" placeholder="Buscar manga…">
       <select id="genreSel"><option value="">Todos los géneros</option></select>
+      <button id="bgBtn" class="bgBtn" title="Fondo de la biblioteca"><svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="10" fill="#ff3b5c"/><circle cx="9" cy="9" r="3.2" fill="#ffd75e"/><circle cx="15.5" cy="9" r="3.2" fill="#3ddc97"/><circle cx="9" cy="15.5" r="3.2" fill="#4aa8ff"/><circle cx="15.5" cy="15.5" r="3.2" fill="#c580ff"/></svg></button>
       <button id="newMangaBtn">+ Nuevo manga</button>
+    </div>
+    <div id="bgPicker" hidden>
+      <div><span id="bgCurrent">🎨 Fondo: Negro · Confeti</span></div>
+      <div class="lbl">COLOR</div>
+      <div class="bgDots" id="bgDots"></div>
+      <div class="lbl">DIBUJO</div>
+      <div class="patRow" id="bgPats"></div>
     </div>
     <div id="contSec" hidden style="display:flex;gap:8px"><button id="contBtn" class="primary" style="flex:1"></button><button id="contDismiss" title="Quitar">✕</button></div>
     <div class="libWrap">
@@ -512,7 +529,7 @@ function mangaList(){
   const ov = getOv();
   const base = [
     {title: MANGA.title, meta: META_SLIME, chapters: CHAPTERS.slice()},
-    {title: 'La Vida Después de la Muerte', meta: META_VIDA, chapters: []},
+    {title: 'La Vida Después de la Muerte', meta: META_VIDA, chapters: (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA.slice() : [])},
   ];
   base.forEach((m, idx) => {
     const hid = (ov.hidden || {})[idx] || {};
@@ -1260,7 +1277,8 @@ function renderAdminList(){
   for (const n of nums.concat((ov.added||[]).filter(a=>a.manga===mid).map(a=>a.num))) allNums[n] = true;
   Object.keys(allNums).map(Number).sort((a,b)=>b-a).forEach(num => {
     const hid = !!((ov.hidden||{})[mid] || {})[num];
-    const base = CHAPTERS.find(c=>c.num===num);
+    const baseList = mid === 1 ? (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []) : CHAPTERS;
+    const base = baseList.find(c=>c.num===num);
     const add = (ov.added||[]).find(a=>a.manga===mid && a.num===num);
     const row = document.createElement('div');
     row.className = 'admRow';
@@ -1278,7 +1296,8 @@ function renderAdminList(){
 function openDetailRefresh(){ if (!$('#detailView').hidden) openDetail(); else { renderCards(($('#catSearch') && $('#catSearch').value) || ''); } }
 function renameChapter(mid, num){
   const ov = getOv();
-  const base = CHAPTERS.find(c=>c.num===num);
+  const baseList = mid === 1 ? (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []) : CHAPTERS;
+  const base = baseList.find(c=>c.num===num);
   const add = (ov.added||[]).find(a=>a.manga===mid && a.num===num);
   const cur = (((ov.titles||{})[mid]||{})[num]) || (base && base.title) || (add && add.title) || '';
   const t = prompt('Título del capítulo ' + num + ':', cur || '');
@@ -1688,12 +1707,16 @@ async function ghPut(path, text, msg){
 }
 function buildDataJs(){
   const ch = CHAPTERS.map(c => Object.assign({}, c));
+  const chVida = (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []).map(c => Object.assign({}, c));
   for (const a of (getOv().added || [])){
     if (a.manga === 0 && !ch.some(c => c.num === a.num))
       ch.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
+    if (a.manga === 1 && !chVida.some(c => c.num === a.num))
+      chVida.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
   }
   ch.sort((a,b)=>a.num-b.num);
-  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\n';
+  chVida.sort((a,b)=>a.num-b.num);
+  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\n';
 }
 $('#ghPubData').onclick = () => ghPut('data.js', buildDataJs(), 'Actualizar capítulos desde AILector');
 $('#ghPubIndex').onclick = async () => {
@@ -1943,10 +1966,102 @@ function loadUtter(){
     $('#utterBox').appendChild(s);
   } catch(e){}
 }
+/* ---------- fondo de la biblioteca ---------- */
+const HOME_COLORS = [
+  {n:'Rojo', c:'#e63946'}, {n:'Naranja', c:'#f4842c'}, {n:'Ámbar', c:'#ffae00'},
+  {n:'Amarillo', c:'#ffdf3d'}, {n:'Lima', c:'#9be815'}, {n:'Verde', c:'#2ecc40'},
+  {n:'Esmeralda', c:'#00b578'}, {n:'Turquesa', c:'#00d0b0'}, {n:'Cian', c:'#00c8ff'},
+  {n:'Celeste', c:'#4aa8ff'}, {n:'Azul', c:'#2f6df6'}, {n:'Índigo', c:'#5a4ff2'},
+  {n:'Violeta', c:'#7b2ff7'}, {n:'Púrpura', c:'#a64df0'}, {n:'Fucsia', c:'#ef3fb0'},
+  {n:'Rosa', c:'#ff6fa5'}, {n:'Coral', c:'#ff7f5c'}, {n:'Carmesí', c:'#c1121f'},
+  {n:'Vino', c:'#7a1e3f'}, {n:'Marrón', c:'#9c6644'}, {n:'Melocotón', c:'#ffb37a'},
+  {n:'Lavanda', c:'#b9a7ff'}, {n:'Menta', c:'#7dfcd0'}, {n:'Grafito', c:'#23262e'},
+];
+const HOME_PATS = [
+  {id:'liso', n:'Liso'}, {id:'confeti', n:'Confeti'}, {id:'puntos', n:'Puntos'},
+  {id:'cuadros', n:'Cuadros'}, {id:'lineas', n:'Líneas'}, {id:'zigzag', n:'Zigzag'},
+  {id:'diamantes', n:'Diamantes'}, {id:'hexag', n:'Hexágonos'}, {id:'olas', n:'Olas'},
+  {id:'cruces', n:'Cruces'}, {id:'corazones', n:'Corazones'}, {id:'burbujas', n:'Burbujas'},
+  {id:'comic', n:'Cómic'}, {id:'asterisco', n:'Asterisco'}, {id:'floral', n:'Floral'},
+  {id:'manga', n:'Manga'}, {id:'estrellas', n:'Estrellas'}, {id:'ajedrez', n:'Ajedrez'},
+  {id:'triangulos', n:'Triángulos'}, {id:'rayos', n:'Rayos'}, {id:'nubes', n:'Nubes'},
+  {id:'hojas', n:'Hojas'}, {id:'lunares', n:'Lunares'}, {id:'mosaico', n:'Mosaico'},
+];
+function homePatSvg(id){
+  const F = 'rgba(255,255,255,0.10)', S = 'stroke="' + F + '" stroke-width="1.5" fill="none"';
+  const FF = 'fill="' + F + '"';
+  const G = 'fill="rgba(255,215,94,0.14)"';
+  const P = {
+    confeti: '<circle cx="10" cy="12" r="2.5" ' + FF + '/><circle cx="33" cy="30" r="1.5" ' + G + '/><rect x="24" y="6" width="5" height="5" transform="rotate(20 26 8)" ' + FF + '/><rect x="7" y="25" width="4" height="4" transform="rotate(45 9 27)" ' + G + '/><circle cx="20" cy="34" r="1.5" ' + FF + '/>',
+    puntos: '<circle cx="10" cy="10" r="3" ' + FF + '/><circle cx="30" cy="10" r="3" ' + FF + '/><circle cx="10" cy="30" r="3" ' + FF + '/><circle cx="30" cy="30" r="3" ' + FF + '/><circle cx="20" cy="20" r="1.5" ' + G + '/>',
+    cuadros: '<path d="M40 0H0V40" ' + S + '/><circle cx="0" cy="0" r="2" ' + FF + '/><circle cx="20" cy="20" r="1.5" ' + G + '/>',
+    lineas: '<path d="M0 40L40 0 M-10 30L30 -10 M10 50L50 10" ' + S + '/>',
+    zigzag: '<path d="M0 26 L10 16 L20 26 L30 16 L40 26" ' + S + '/><path d="M0 34 L10 24 L20 34 L30 24 L40 34" ' + S + ' opacity="0.5"/>',
+    diamantes: '<path d="M20 6 L34 20 L20 34 L6 20 Z" ' + S + '/><path d="M20 13 L27 20 L20 27 L13 20 Z" ' + S + '/><circle cx="20" cy="20" r="1.8" ' + G + '/>',
+    hexag: '<path d="M20 4 L35 13 L35 27 L20 36 L5 27 L5 13 Z" ' + S + '/><circle cx="20" cy="20" r="2" ' + G + '/>',
+    olas: '<circle cx="0" cy="8" r="10" ' + S + '/><circle cx="20" cy="8" r="10" ' + S + '/><circle cx="40" cy="8" r="10" ' + S + '/><circle cx="-10" cy="28" r="10" ' + S + '/><circle cx="10" cy="28" r="10" ' + S + '/><circle cx="30" cy="28" r="10" ' + S + '/><circle cx="50" cy="28" r="10" ' + S + '/>',
+    cruces: '<path d="M10 6V14 M6 10H14 M30 6V14 M26 10H34 M10 26V34 M6 30H14 M30 26V34 M26 30H34" ' + S + '/><circle cx="20" cy="20" r="1.8" ' + G + '/>',
+    corazones: '<path d="M20 31 C10 23 7 16 11 13 C14 11 17 13 20 16 C23 13 26 11 29 13 C33 16 30 23 20 31 Z" ' + FF + '/><circle cx="31" cy="31" r="1.5" ' + G + '/><circle cx="9" cy="8" r="1.5" ' + G + '/>',
+    burbujas: '<circle cx="12" cy="14" r="5" ' + S + '/><circle cx="29" cy="26" r="7" ' + S + '/><circle cx="30" cy="9" r="2.5" ' + S + '/><circle cx="9" cy="31" r="2" ' + S + '/>',
+    comic: '<circle cx="8" cy="8" r="3.5" ' + FF + '/><circle cx="24" cy="8" r="3.5" ' + FF + '/><circle cx="16" cy="16" r="2" ' + G + '/><circle cx="32" cy="16" r="2" ' + G + '/><circle cx="8" cy="24" r="3.5" ' + FF + '/><circle cx="24" cy="24" r="3.5" ' + FF + '/><circle cx="16" cy="32" r="2" ' + G + '/><circle cx="32" cy="32" r="2" ' + G + '/>',
+    asterisco: '<path d="M20 8V32 M8 20H32 M11.5 11.5L28.5 28.5 M28.5 11.5L11.5 28.5" ' + S + '/><circle cx="20" cy="20" r="2" ' + G + '/>',
+    floral: '<g ' + S + '><ellipse cx="20" cy="12" rx="4" ry="7"/><ellipse cx="20" cy="12" rx="4" ry="7" transform="rotate(72 20 20)"/><ellipse cx="20" cy="12" rx="4" ry="7" transform="rotate(144 20 20)"/><ellipse cx="20" cy="12" rx="4" ry="7" transform="rotate(216 20 20)"/><ellipse cx="20" cy="12" rx="4" ry="7" transform="rotate(288 20 20)"/></g><circle cx="20" cy="20" r="2.5" ' + G + '/>',
+    manga: '<circle cx="8" cy="8" r="2" ' + FF + '/><circle cx="24" cy="8" r="2" ' + FF + '/><circle cx="16" cy="16" r="1.2" ' + G + '/><circle cx="32" cy="16" r="1.2" ' + G + '/><circle cx="8" cy="24" r="2" ' + FF + '/><circle cx="24" cy="24" r="2" ' + FF + '/><circle cx="16" cy="32" r="1.2" ' + G + '/><circle cx="32" cy="32" r="1.2" ' + G + '/>',
+    estrellas: '<path d="M20 7 L22.6 14.5 L30.5 14.5 L24.2 19 L26.5 26.5 L20 22 L13.5 26.5 L15.8 19 L9.5 14.5 L17.4 14.5 Z" ' + FF + '/><path d="M32 6 C32.6 10 33.5 11 37 11.5 C33.5 12 32.6 13 32 17 C31.4 13 30.5 12 27 11.5 C30.5 11 31.4 10 32 6 Z" ' + G + '/><circle cx="9" cy="30" r="1.6" ' + G + '/>',
+    ajedrez: '<rect x="0" y="0" width="20" height="20" ' + FF + '/><rect x="20" y="20" width="20" height="20" ' + FF + '/><circle cx="10" cy="10" r="1.5" ' + G + '/><circle cx="30" cy="30" r="1.5" ' + G + '/>',
+    triangulos: '<path d="M20 8 L34 32 L6 32 Z" ' + S + '/><path d="M20 17 L27 29 L13 29 Z" ' + S + '/><circle cx="20" cy="33" r="1.5" ' + G + '/>',
+    rayos: '<circle cx="20" cy="20" r="3.5" ' + FF + '/><path d="M20 20 L20 5 M20 20 L31 9 M20 20 L35 20 M20 20 L31 31 M20 20 L20 35 M20 20 L9 31 M20 20 L5 20 M20 20 L9 9" ' + S + '/>',
+    nubes: '<ellipse cx="19" cy="23" rx="11" ry="6" ' + S + '/><circle cx="28" cy="17" r="4.5" ' + S + '/><circle cx="12" cy="33" r="1.5" ' + G + '/><circle cx="24" cy="34" r="1.5" ' + G + '/><circle cx="31" cy="33" r="1.5" ' + G + '/>',
+    hojas: '<path d="M14 6 C20 12 20 22 14 28 C8 22 8 12 14 6 Z" ' + S + '/><path d="M26 12 C32 18 32 28 26 34 C20 28 20 18 26 12 Z" ' + S + '/><circle cx="20" cy="20" r="1.5" ' + G + '/>',
+    lunares: '<circle cx="10" cy="10" r="6" ' + FF + '/><circle cx="30" cy="30" r="6" ' + FF + '/><circle cx="30" cy="10" r="3" ' + G + '/><circle cx="10" cy="30" r="3" ' + G + '/>',
+    mosaico: '<rect x="12" y="12" width="16" height="16" transform="rotate(45 20 20)" ' + S + '/><circle cx="20" cy="20" r="2" ' + G + '/><circle cx="0" cy="0" r="1.5" ' + FF + '/><circle cx="40" cy="0" r="1.5" ' + FF + '/><circle cx="0" cy="40" r="1.5" ' + FF + '/><circle cx="40" cy="40" r="1.5" ' + FF + '/>',
+  };
+  return P[id] || '';
+}
+function getHomeBg(){
+  try { const o = JSON.parse(localStorage.getItem('sl-homebg') || '{"c":"#23262e","p":"confeti"}'); if (o && o.c && o.p) return o; } catch(e){}
+  return {c:'#23262e', p:'confeti'};
+}
+function applyHomeBg(){
+  const hv = $('#homeView'); if (!hv) return;
+  const bg = getHomeBg();
+  hv.style.backgroundColor = bg.c;
+  hv.style.backgroundImage = bg.p === 'liso' ? 'none' :
+    'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">' + homePatSvg(bg.p) + '</svg>') + '")';
+  const cn = (HOME_COLORS.find(x=>x.c===bg.c)||{}).n || bg.c;
+  const pn = ((HOME_PATS.find(x=>x.id===bg.p))||{}).n || bg.p;
+  const cur = $('#bgCurrent');
+  if (cur) cur.textContent = '🎨 Fondo: ' + cn + ' · ' + pn;
+  document.querySelectorAll('#bgDots button').forEach(b => { b.style.outline = b.dataset.c === bg.c ? '2px solid var(--accent)' : 'none'; });
+  document.querySelectorAll('#bgPats .smallBtn').forEach(b => { b.classList.toggle('primary', b.dataset.p === bg.p); });
+}
+function buildBgPicker(){
+  const dc = $('#bgDots');
+  if (dc && !dc.children.length){
+    HOME_COLORS.forEach(o => {
+      const b = document.createElement('button');
+      b.title = o.n; b.dataset.c = o.c; b.style.background = o.c;
+      b.onclick = () => { const bg = getHomeBg(); bg.c = o.c; try{localStorage.setItem('sl-homebg', JSON.stringify(bg));}catch(e){} applyHomeBg(); };
+      dc.appendChild(b);
+    });
+  }
+  const dp = $('#bgPats');
+  if (dp && !dp.children.length){
+    HOME_PATS.forEach(o => {
+      const b = document.createElement('button');
+      b.className = 'smallBtn'; b.dataset.p = o.id; b.textContent = o.n;
+      b.onclick = () => { const bg = getHomeBg(); bg.p = o.id; try{localStorage.setItem('sl-homebg', JSON.stringify(bg));}catch(e){} applyHomeBg(); };
+      dp.appendChild(b);
+    });
+  }
+}
+$('#bgBtn').onclick = () => { const p = $('#bgPicker'); p.hidden = !p.hidden; };
 updateAdminBtn();
 applyReadPrefs();
 applySideBg();
 buildSidePicker();
+buildBgPicker();
+applyHomeBg();
 applyTheme();
 updateAuthUI();
 initHome();
