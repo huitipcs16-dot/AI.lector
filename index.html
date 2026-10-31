@@ -402,7 +402,7 @@
   <div class="modalCard">
     <h3>🔓 Administración <span style="font-size:11px;color:var(--dim)">(este dispositivo)</span></h3>
     <div class="fRow">Manga
-      <select id="admManga"><option value="0">Tensei Shitara Slime Datta Ken</option><option value="1">La Vida Después de la Muerte</option></select>
+      <select id="admManga"><option value="0">Tensei Shitara Slime Datta Ken</option><option value="1">La Vida Después de la Muerte</option><option value="2">Overlord</option></select>
     </div>
     <div class="fRow">Enlace del visor o imágenes directas (una por línea)<textarea id="admUrl" placeholder="https://zonatmo.org/view_uploads/…"></textarea></div>
     <div class="fRow">Título (opcional)<input id="admTitle" placeholder="Cap. 31"></div>
@@ -438,6 +438,19 @@ const META_VIDA = {
   sinonimos: '', autores: [], arte: [], subidoPor: '',
   counts: {leido:0, pendiente:0, siguiendo:0, favorito:0, tengo:0, abandonado:0}
 };
+const META_OVER = {
+  rating: 3.9, demographic: 'Seinen', tipo: 'MANGA', estado: 'Completado', cover: 'cover3.jpg',
+  genres: ['Acción','Aventura','Comedia','Drama','Fantasía'],
+  synopsis: '¿Qué haces cuando tu videojuego favorito cierra sus servidores? Momonga decidió quedarse conectado hasta el final. Pero cuando todo se apaga, se ve transportado al mundo del juego, convertido en su avatar esqueleto, con sus increíbles poderes mágicos incluidos. ¿Y si él es el villano de su propia historia?',
+  sinonimos: 'Overlord, オーバーロード, El soberano supremo, Повелитель',
+  autores: ['maruyama kugane'], arte: ['miyama fugin'], subidoPor: '',
+  counts: {leido:0, pendiente:0, siguiendo:0, favorito:0, tengo:0, abandonado:0}
+};
+function baseChapters(mid){
+  if (mid === 2) return (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD : []);
+  if (mid === 1) return (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []);
+  return CHAPTERS;
+}
 const $ = s => document.querySelector(s);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
@@ -530,6 +543,7 @@ function mangaList(){
   const base = [
     {title: MANGA.title, meta: META_SLIME, chapters: CHAPTERS.slice()},
     {title: 'La Vida Después de la Muerte', meta: META_VIDA, chapters: (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA.slice() : [])},
+    {title: 'Overlord', meta: META_OVER, chapters: (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD.slice() : [])},
   ];
   base.forEach((m, idx) => {
     const hid = (ov.hidden || {})[idx] || {};
@@ -1277,7 +1291,7 @@ function renderAdminList(){
   for (const n of nums.concat((ov.added||[]).filter(a=>a.manga===mid).map(a=>a.num))) allNums[n] = true;
   Object.keys(allNums).map(Number).sort((a,b)=>b-a).forEach(num => {
     const hid = !!((ov.hidden||{})[mid] || {})[num];
-    const baseList = mid === 1 ? (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []) : CHAPTERS;
+    const baseList = baseChapters(mid);
     const base = baseList.find(c=>c.num===num);
     const add = (ov.added||[]).find(a=>a.manga===mid && a.num===num);
     const row = document.createElement('div');
@@ -1296,7 +1310,7 @@ function renderAdminList(){
 function openDetailRefresh(){ if (!$('#detailView').hidden) openDetail(); else { renderCards(($('#catSearch') && $('#catSearch').value) || ''); } }
 function renameChapter(mid, num){
   const ov = getOv();
-  const baseList = mid === 1 ? (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []) : CHAPTERS;
+  const baseList = baseChapters(mid);
   const base = baseList.find(c=>c.num===num);
   const add = (ov.added||[]).find(a=>a.manga===mid && a.num===num);
   const cur = (((ov.titles||{})[mid]||{})[num]) || (base && base.title) || (add && add.title) || '';
@@ -1708,15 +1722,19 @@ async function ghPut(path, text, msg){
 function buildDataJs(){
   const ch = CHAPTERS.map(c => Object.assign({}, c));
   const chVida = (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []).map(c => Object.assign({}, c));
+  const chOver = (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD : []).map(c => Object.assign({}, c));
   for (const a of (getOv().added || [])){
     if (a.manga === 0 && !ch.some(c => c.num === a.num))
       ch.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
+    if (a.manga === 2 && !chOver.some(c => c.num === a.num))
+      chOver.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
     if (a.manga === 1 && !chVida.some(c => c.num === a.num))
       chVida.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
   }
   ch.sort((a,b)=>a.num-b.num);
   chVida.sort((a,b)=>a.num-b.num);
-  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\n';
+  chOver.sort((a,b)=>a.num-b.num);
+  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\nconst CHAPTERS_OVERLORD = ' + JSON.stringify(chOver) + ';\n';
 }
 $('#ghPubData').onclick = () => ghPut('data.js', buildDataJs(), 'Actualizar capítulos desde AILector');
 $('#ghPubIndex').onclick = async () => {
