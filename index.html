@@ -1,12 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AILector</title>
-<link rel="icon" href="logo.jpg">
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0f1117">
 <style>
   :root{
     --bg:#0f1117; --panel:#181b24; --panel2:#1f2330; --line:#2b3040;
@@ -100,8 +92,27 @@
   .cdCover{width:200px;flex-shrink:0}
   .cdCover .mCoverWrap{border-radius:10px;border:1px solid var(--line)}
   .cdInfo{flex:1;min-width:240px}
-  .cdTitle{font-size:20px;font-weight:900;margin:0 0 8px}
-  .cdSyn{font-size:13px;line-height:1.55;color:#cdd4e3}
+ .cdTitle{font-size:20px;font-weight:900;margin:0 0 8px}
+ .cdSyn{font-size:13px;line-height:1.55;color:#cdd4e3}
+  .hero{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:-2px -2px 12px}
+  .heroBg{position:absolute;inset:0;background-size:cover;background-position:center 20%;filter:blur(30px) brightness(.45);transform:scale(1.2)}
+  .heroIn{position:relative;display:flex;gap:22px;padding:26px;background:linear-gradient(100deg,rgba(8,10,16,.9),rgba(8,10,16,.55));flex-wrap:wrap}
+  .cdCover .mCoverWrap{box-shadow:var(--shadow)}
+  .heroTitle{font-size:30px;font-weight:900;margin:0 0 8px;color:#fff;letter-spacing:.2px}
+  .heroRate{display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:4px}
+  .heroRate .stars{color:#f5a623;font-size:16px;letter-spacing:2px}
+  .heroRate .rv{font-weight:800}
+  .heroRate .rc{color:var(--dim);font-size:12px}
+  .gChip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#dfe5f2;font-size:12px;font-weight:600;border-radius:7px;padding:4px 12px}
+  .heroAlt{font-size:12px;color:var(--dim);margin-top:10px}
+  .heroAlt b{display:inline-block;font-size:10px;letter-spacing:1.5px;margin-right:8px;color:#8fa0bd}
+  .heroAlt .sep{margin:0 8px;color:#5b6577}
+  .heroCtas{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .ctaPrimary{background:#7c5cff;border-color:#7c5cff;color:#fff;font-weight:800}
+  .ctaDark{background:rgba(255,255,255,.08)}
+  .heroStats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.12)}
+  .heroStats .hs label{display:block;font-size:11px;color:#8fa0bd;margin-bottom:2px}
+  .heroStats .hs span{font-weight:800;font-size:13px;color:#fff}
   .chipRow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
   .chip{background:#2456c6;color:#fff;font-size:12px;font-weight:700;border-radius:7px;padding:4px 12px}
   .pill{background:#2a2f3f;border:1px solid var(--line);font-size:12px;border-radius:999px;padding:3px 12px;display:inline-block;margin:2px 4px 2px 0}
@@ -178,11 +189,11 @@
   .admRow{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:13px}
   .admRow .t{flex:1}
   @media (max-width:640px){.cdCover{width:140px}}
+  @media (max-width:640px){.heroIn{padding:16px;gap:14px}.heroTitle{font-size:22px}.heroStats{grid-template-columns:repeat(3,1fr)}}
 </style>
-</head>
-<body>
+
 <header>
-  <div class="brand" id="brandHome"><span class="logo"><img src="logo.jpg" alt="AILector" onerror="this.remove()">A</span> AILector</div>
+  <div class="brand" id="brandHome"><span class="logo"><img src="src/logo.jpg" alt="AILector" onerror="this.remove()">A</span> AILector</div>
   <nav><button class="tab active" id="tabLib">Biblioteca</button><button class="tab" id="tabCom">Comunidad</button><button class="tab" id="tabLists">Listas</button><button class="tab" id="tabNews">Noticias</button><button class="tab" id="adminBtn" title="Modo administrador">🔒</button></nav>
   <div class="hRight">
     <button class="tab" id="themeBtn" title="Tema claro / oscuro">☀</button>
@@ -250,17 +261,24 @@
   </div>
 
   <div id="detailView" class="panel" hidden>
-    <div class="cdTop">
-      <div class="cdCover"><div class="mCoverWrap"><img id="dCover" src="cover.jpg" alt="Portada"></div></div>
-      <div class="cdInfo">
-        <h2 class="cdTitle" id="dTitle"></h2>
-        <div id="dMeta"></div>
-        <p class="cdSyn" id="dSyn"></p>
-        <div class="chipRow" id="dGenres"></div>
-        <div class="kv" id="dExtra"></div>
+    <div class="hero">
+      <div class="heroBg" id="dHeroBg"></div>
+      <div class="heroIn">
+        <div class="cdCover"><div class="mCoverWrap"><img id="dCover" src="src/cover.jpg" alt="Portada"></div></div>
+        <div class="cdInfo">
+          <h1 class="heroTitle" id="dTitle"></h1>
+          <div class="heroRate" id="dRate"></div>
+          <div class="chipRow" id="dGenres"></div>
+          <div class="heroAlt" id="dAlt"></div>
+          <p class="cdSyn" id="dSyn"></p>
+          <div class="heroCtas">
+            <button class="ctaPrimary" id="dFirstBtn">▶ Leer primer capítulo</button>
+            <button class="ctaDark" id="dLastBtn"></button>
+          </div>
+          <div class="heroStats" id="dStats"></div>
+        </div>
       </div>
     </div>
-    <div class="statRow" id="dStats"></div>
     <div class="chapHead"><h3 id="chapHeadT">Capítulos</h3><span style="flex:1"></span><button class="smallBtn" id="favBtn" title="Favorito">🤍</button><button class="smallBtn" id="sortBtn" title="Cambiar orden">↓ Nuevos</button><button class="smallBtn" id="markAllBtn">Marcar todos</button><button class="smallBtn" id="unmarkAllBtn">Desmarcar todos</button></div>
     <div id="chapList"></div>
   </div>
@@ -403,12 +421,13 @@
   </div>
 </div>
 
-<script src="data.js"></script>
+<script src="src/data.js"></script>
 <script>
+
 'use strict';
 const ADMIN_HASH = '3219d5d0cef1ccbe929092f051421595b3bd32e8a072b7241306e815a0ab749d';
 const META_SLIME = {
-  rating: 9.2, demographic: 'Shounen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'cover.jpg',
+  rating: 9.2, demographic: 'Shounen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'src/cover.jpg',
   genres: ['Acción','Aventura','Magia','Reencarnación'],
   synopsis: 'Un hombre, que al tratar de salvar a su compañero de trabajo y su novia, fue apuñalado por un ladrón que escapaba. Mientras moría desangrado escuchó una voz extraña. Esta voz escuchó su lamento y le dio la Habilidad Única "Gran Sabio". Ahora ha reencarnado como un Slime en otro mundo. ¿Será este el inicio de una emocionante aventura?',
   sinonimos: 'Tensei Shitara Slime Datta Ken, 転生したらスライムだった件',
@@ -416,10 +435,18 @@ const META_SLIME = {
   counts: {leido:388, pendiente:844, siguiendo:5586, favorito:1790, tengo:126, abandonado:11}
 };
 const META_VIDA = {
-  rating: 8.0, demographic: 'Seinen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'cover2.jpg',
-  genres: [], synopsis: 'Sinopsis disponible próximamente.',
-  sinonimos: '', autores: [], arte: [], subidoPor: '',
+  rating: 8.0, demographic: 'Seinen', tipo: 'MANHWA', estado: 'PUBLICÁNDOSE', cover: 'src/cover2.jpg',
+  genres: ['Acción','Aventura','Fantasía'],
+  synopsis: 'El rey Grey lo tiene todo: fuerza, riqueza y prestigio en un mundo gobernado por la habilidad marcial. Pero la soledad acompaña a quienes ostentan un gran poder. Tras una muerte inesperada, reencarna en un mundo nuevo lleno de magia y monstruos, con una segunda oportunidad para enmendar sus errores y vivir la vida que nunca tuvo.',
+  sinonimos: 'The Beginning After The End, TBATE', autores: [], arte: [], subidoPor: 'ZonaTMO',
   counts: {leido:0, pendiente:0, siguiendo:0, favorito:0, tengo:0, abandonado:0}
+};
+const META_OVERLORD = {
+  rating: 3.9, demographic: 'Seinen', tipo: 'MANGA', estado: 'COMPLETADO', cover: 'src/cover-overlord.jpg',
+  genres: ['Acción','Aventura','Comedia','Drama','Fantasía','Maduro'],
+  synopsis: '¿Qué haces cuando tu videojuego favorito cierra sus servidores? Momonga decidió seguir conectado hasta el mismísimo final. Pero cuando las luces se apagan, descubre que ha sido transportado al mundo del juego, convertido en su avatar esquelético, con increíbles poderes mágicos incluidos. ¿Y si resulta ser el villano de su propia historia?',
+  sinonimos: 'Overlord Manga Online, Amir, Повелитель', autores: ['Kugane Maruyama'], arte: ['Hugin Miyama'], subidoPor: '',
+  counts: {leido:100, pendiente:60, siguiendo:150, favorito:80, tengo:20, abandonado:16}
 };
 const $ = s => document.querySelector(s);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -512,7 +539,8 @@ function mangaList(){
   const ov = getOv();
   const base = [
     {title: MANGA.title, meta: META_SLIME, chapters: CHAPTERS.slice()},
-    {title: 'La Vida Después de la Muerte', meta: META_VIDA, chapters: []},
+    {title: 'La Vida Después de la Muerte', meta: META_VIDA, chapters: (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA.slice() : [])},
+    {title: 'Overlord', meta: META_OVERLORD, chapters: []},
   ];
   base.forEach((m, idx) => {
     const hid = (ov.hidden || {})[idx] || {};
@@ -700,30 +728,37 @@ function openDetail(){
   stopAll();
   const m = curManga(), meta = m.meta, chaps = m.chapters;
   $('#dCover').setAttribute('src', meta.cover);
+  try { $('#dHeroBg').style.backgroundImage = 'url("' + meta.cover + '")'; } catch(e){}
   $('#dTitle').textContent = m.title;
-  $('#dMeta').innerHTML = '<span class="pill estadoDot">● ' + escapeHtml(meta.estado) + '</span> <span class="pill">' + escapeHtml(meta.demographic) + '</span> <span class="pill">★ ' + meta.rating.toFixed(2) + '</span>';
+  const full = Math.max(0, Math.min(5, Math.round(meta.rating / 2)));
+  const cc = meta.counts || {};
+  const votes = (cc.leido||0)+(cc.pendiente||0)+(cc.siguiendo||0)+(cc.favorito||0)+(cc.tengo||0)+(cc.abandonado||0);
+  $('#dRate').innerHTML = '<span class="stars">' + '★'.repeat(full) + '☆'.repeat(5-full) + '</span><span class="rv">' + meta.rating.toFixed(1) + '</span><span class="rc">' + votes + ' votos</span>';
+  $('#dGenres').innerHTML = (meta.genres||[]).map(x=>'<span class="gChip">'+escapeHtml(x)+'</span>').join('') +
+    '<span class="gChip">' + escapeHtml(meta.demographic) + '</span><span class="gChip">' + escapeHtml(meta.tipo) + '</span>';
+  $('#dAlt').innerHTML = meta.sinonimos ? '<b>ALTERNATIVE TITLES</b>' + escapeHtml(meta.sinonimos).split(',').join('<span class="sep">·</span>') : '';
   $('#dSyn').textContent = meta.synopsis;
-  $('#dGenres').innerHTML = meta.genres.map(x=>'<span class="chip">'+escapeHtml(x)+'</span>').join('');
-  let extra = '';
-  if (meta.sinonimos) extra += '<b>Sinónimos</b><div>' + escapeHtml(meta.sinonimos) + '</div>';
-  if (meta.autores.length) extra += '<b>Autores</b><div>' + meta.autores.map(a=>'<span class="pill">✎ ' + escapeHtml(a) + '</span>').join('') + '</div>';
-  if (meta.arte.length) extra += '<b>Arte</b><div>' + meta.arte.map(a=>'<span class="pill">✎ ' + escapeHtml(a) + '</span>').join('') + '</div>';
-  if (meta.subidoPor) extra += '<b>Subido por</b><div>' + escapeHtml(meta.subidoPor) + '</div>';
-  $('#dExtra').innerHTML = extra;
-  const cc = meta.counts;
-  $('#dStats').innerHTML =
-    '<div class="stat"><b>' + cc.leido + '</b>✅ Leído</div>' +
-    '<div class="stat"><b>' + cc.pendiente + '</b>🕐 Pendiente</div>' +
-    '<div class="stat"><b>' + cc.siguiendo + '</b>▶ Siguiendo</div>' +
-    '<div class="stat"><b>' + cc.favorito + '</b>🤍 Favorito</div>' +
-    '<div class="stat"><b>' + cc.tengo + '</b>📦 Lo tengo</div>' +
-    '<div class="stat"><b>' + cc.abandonado + '</b>🚩 Abandonado</div>';
+  const nums = chaps.map(c=>c.num).sort((a,b)=>a-b);
+  const first = nums[0], last = nums[nums.length-1];
+  $('#dFirstBtn').hidden = !nums.length;
+  $('#dLastBtn').hidden = !nums.length;
+  $('#dFirstBtn').onclick = () => { if (first != null) openChapter(first); };
+  $('#dLastBtn').textContent = 'Último capítulo ' + last + ' »';
+  $('#dLastBtn').onclick = () => { if (last != null) openChapter(last); };
+  const cell = (l,v) => '<div class="hs"><label>'+l+'</label><span>'+v+'</span></div>';
   renderChapList();
   $('#favBtn').textContent = getFavs().includes(state.manga) ? '❤️' : '🤍';
   $('#sortBtn').textContent = state.sortAsc ? '↑ Antiguos' : '↓ Nuevos';
   let total = 0;
   for (const c of chaps) total += (c.pages || []).length;
   $('#chapHeadT').textContent = 'Capítulos ' + chaps.length + ' · ' + total + ' pág.';
+  $('#dStats').innerHTML =
+    cell('Estado', escapeHtml(meta.estado)) +
+    cell('Autor', escapeHtml((meta.autores||[]).join(', ') || '—')) +
+    cell('Arte', escapeHtml((meta.arte||[]).join(', ') || '—')) +
+    cell('Tipo', escapeHtml(meta.tipo)) +
+    cell('Capítulos', chaps.length) +
+    cell('Páginas', total);
   show('detail');
 }
 function readKey(num){ return state.manga + ':' + num; }
@@ -769,6 +804,13 @@ function renderChapList(){
 
 /* ---------- red ---------- */
 async function fetchBlob(u){
+  try {
+    const sf = (typeof root !== 'undefined' && root && root.superFetch) ? root.superFetch : null;
+    if (sf){
+      const r = await sf(u, {referrerPolicy:'no-referrer'});
+      if (r.ok){ const b = await r.blob(); if (b && b.size > 1000) return b; }
+    }
+  } catch(e){}
   try {
     const r = await fetch(u, {referrerPolicy:'no-referrer'});
     if (r.ok){ const b = await r.blob(); if (b && b.size > 1000) return b; }
@@ -1703,9 +1745,8 @@ $('#ghPubIndex').onclick = async () => {
   } catch(e){ toast('Abre la página por http(s) para publicar el index'); }
 };
 /* ---------- arranque: PWA, stats, enlace profundo ---------- */
-if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
-  window.addEventListener('load', () => { try { navigator.serviceWorker.register('sw.js'); } catch(e){} });
-}
+/* Service worker desactivado en Perchance (congelaría las actualizaciones con caché vieja).
+     El archivo sigue en src/sw.js para la versión de escritorio/GitHub. */
 bumpVisit();
 loadGc();
 try {
@@ -1951,5 +1992,3 @@ applyTheme();
 updateAuthUI();
 initHome();
 </script>
-</body>
-</html>

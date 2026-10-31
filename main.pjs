@@ -1,0 +1,10 @@
+generateText = {import:ai-text-plugin}
+superFetch = {import:super-fetch-plugin}
+
+$meta
+  title = AILector
+  description = Lee tus manga online por capítulos: biblioteca, comunidad, listas, noticias, lector con cascada, doble página, zoom, continuar leyendo, modo offline y narración por voz.
+  tags = manga, lectura, tts, cascada, biblioteca, comunidad, offline
+  icon = https://user.uploads.dev/file/2d04f858875ed4a16c4ce77c7c2a2bc8.png
+  header
+    mode = minimal
