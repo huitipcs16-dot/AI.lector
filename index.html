@@ -36,15 +36,6 @@
   :root[data-theme="light"] #trans{background:rgba(255,255,255,.85)}
   :root[data-theme="light"] .chapRow:hover{background:rgba(0,0,0,.04)}
   :root[data-theme="light"] .histRow:hover{background:rgba(0,0,0,.04)}
-  .bgDots{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 8px}
-  .bgDots button{width:30px;height:30px;border-radius:50%;padding:0;border:2px solid #555}
-  .bgBtn{padding:6px 10px;border-color:var(--accent);box-shadow:0 0 12px rgba(255,59,92,.55);animation:bgGlow 2s infinite alternate}
-  .bgBtn svg{display:block}
-  @keyframes bgGlow{to{box-shadow:0 0 22px rgba(255,180,84,.85)}}
-  .patRow{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}
-  #bgPicker{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px}
-  #bgPicker .lbl{color:var(--dim);font-size:12px;margin:8px 0 4px;font-weight:700}
-  #bgCurrent{font-size:12px;color:var(--dim)}
   .listCard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}  .listCard h4{margin:0 0 8px}
   .newsGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
   .newsCard{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer}
@@ -216,15 +207,7 @@
     <div class="catBar">
       <input id="catSearch" placeholder="Buscar manga…">
       <select id="genreSel"><option value="">Todos los géneros</option></select>
-      <button id="bgBtn" class="bgBtn" title="Fondo de la biblioteca"><svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="10" fill="#ff3b5c"/><circle cx="9" cy="9" r="3.2" fill="#ffd75e"/><circle cx="15.5" cy="9" r="3.2" fill="#3ddc97"/><circle cx="9" cy="15.5" r="3.2" fill="#4aa8ff"/><circle cx="15.5" cy="15.5" r="3.2" fill="#c580ff"/></svg></button>
       <button id="newMangaBtn">+ Nuevo manga</button>
-    </div>
-    <div id="bgPicker" hidden>
-      <div><span id="bgCurrent">🎨 Fondo: Negro · Confeti</span></div>
-      <div class="lbl">COLOR</div>
-      <div class="bgDots" id="bgDots"></div>
-      <div class="lbl">DIBUJO</div>
-      <div class="patRow" id="bgPats"></div>
     </div>
     <div id="contSec" hidden style="display:flex;gap:8px"><button id="contBtn" class="primary" style="flex:1"></button><button id="contDismiss" title="Quitar">✕</button></div>
     <div class="libWrap">
@@ -2066,32 +2049,10 @@ function applyHomeBg(){
   document.querySelectorAll('#bgDots button').forEach(b => { b.style.outline = b.dataset.c === bg.c ? '2px solid var(--accent)' : 'none'; });
   document.querySelectorAll('#bgPats .smallBtn').forEach(b => { b.classList.toggle('primary', b.dataset.p === bg.p); });
 }
-function buildBgPicker(){
-  const dc = $('#bgDots');
-  if (dc && !dc.children.length){
-    HOME_COLORS.forEach(o => {
-      const b = document.createElement('button');
-      b.title = o.n; b.dataset.c = o.c; b.style.background = o.c;
-      b.onclick = () => { const bg = getHomeBg(); bg.c = o.c; try{localStorage.setItem('sl-homebg', JSON.stringify(bg));}catch(e){} applyHomeBg(); };
-      dc.appendChild(b);
-    });
-  }
-  const dp = $('#bgPats');
-  if (dp && !dp.children.length){
-    HOME_PATS.forEach(o => {
-      const b = document.createElement('button');
-      b.className = 'smallBtn'; b.dataset.p = o.id; b.textContent = o.n;
-      b.onclick = () => { const bg = getHomeBg(); bg.p = o.id; try{localStorage.setItem('sl-homebg', JSON.stringify(bg));}catch(e){} applyHomeBg(); };
-      dp.appendChild(b);
-    });
-  }
-}
-$('#bgBtn').onclick = () => { const p = $('#bgPicker'); p.hidden = !p.hidden; };
 updateAdminBtn();
 applyReadPrefs();
 applySideBg();
 buildSidePicker();
-buildBgPicker();
 applyHomeBg();
 applyTheme();
 updateAuthUI();
