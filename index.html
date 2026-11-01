@@ -2043,9 +2043,12 @@ function getHomeBg(){
 function applyHomeBg(){
   const hv = $('#homeView'); if (!hv) return;
   const bg = getHomeBg();
-  hv.style.backgroundColor = bg.c;
-  hv.style.backgroundImage = bg.p === 'liso' ? 'none' :
+  const img = bg.p === 'liso' ? 'none' :
     'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">' + homePatSvg(bg.p) + '</svg>') + '")';
+  hv.style.backgroundColor = bg.c;
+  hv.style.backgroundImage = img;
+  document.body.style.backgroundColor = bg.c;
+  document.body.style.backgroundImage = img;
   const cn = (HOME_COLORS.find(x=>x.c===bg.c)||{}).n || bg.c;
   const pn = ((HOME_PATS.find(x=>x.id===bg.p))||{}).n || bg.p;
   const cur = $('#bgCurrent');
