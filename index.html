@@ -75,6 +75,14 @@
   .tab.active{background:var(--panel2);border-color:var(--line);color:var(--text)}
   .wrap{max-width:1180px;margin:0 auto;padding:16px}
   .panel{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}
+  .sideArt{position:fixed;top:0;bottom:0;width:min(20vw,300px);z-index:0;
+    background-size:cover;background-position:center top;background-repeat:no-repeat;pointer-events:none}
+  #sideArtL{left:0;background-image:url("https://user.uploads.dev/file/a1ae0ede977befb85884394c7316e26c.jpg");
+    -webkit-mask-image:linear-gradient(to right,#000 55%,transparent);mask-image:linear-gradient(to right,#000 55%,transparent)}
+  #sideArtR{right:0;background-image:url("https://user.uploads.dev/file/7239b7022904bff111b739df551d78ba.jpg");
+    -webkit-mask-image:linear-gradient(to left,#000 55%,transparent);mask-image:linear-gradient(to left,#000 55%,transparent)}
+  .wrap{position:relative;z-index:1}
+  @media (max-width:1100px){.sideArt{display:none}}
   .catBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
   #catSearch{flex:1;min-width:150px;font:inherit;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
   #newMangaBtn{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
@@ -190,6 +198,8 @@
 </style>
 </head>
 <body>
+<div class="sideArt" id="sideArtL" aria-hidden="true"></div>
+<div class="sideArt" id="sideArtR" aria-hidden="true"></div>
 <header>
   <div class="brand" id="brandHome"><span class="logo"><img src="logo.jpg" alt="AILector" onerror="this.remove()">A</span> AILector</div>
   <nav><button class="tab active" id="tabLib">Biblioteca</button><button class="tab" id="tabCom">Comunidad</button><button class="tab" id="tabLists">Listas</button><button class="tab" id="tabNews">Noticias</button><button class="tab" id="adminBtn" title="Modo administrador">🔒</button></nav>
