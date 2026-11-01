@@ -66,14 +66,10 @@
   .tab.active{background:var(--panel2);border-color:var(--line);color:var(--text)}
   .wrap{max-width:1180px;margin:0 auto;padding:16px}
   .panel{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}
-  .sideArt{position:fixed;top:0;bottom:0;width:min(20vw,300px);z-index:0;
-    background-size:cover;background-position:center top;background-repeat:no-repeat;pointer-events:none}
-  #sideArtL{left:0;background-image:url("https://user.uploads.dev/file/a1ae0ede977befb85884394c7316e26c.jpg");
-    -webkit-mask-image:linear-gradient(to right,#000 55%,transparent);mask-image:linear-gradient(to right,#000 55%,transparent)}
-  #sideArtR{right:0;background-image:url("https://user.uploads.dev/file/7239b7022904bff111b739df551d78ba.jpg");
-    -webkit-mask-image:linear-gradient(to left,#000 55%,transparent);mask-image:linear-gradient(to left,#000 55%,transparent)}
+  .wallRow{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+  .wallRow img{width:120px;height:48px;object-fit:cover;border-radius:8px;border:2px solid var(--line);cursor:pointer}
+  .wallRow img.on{border-color:var(--accent)}
   .wrap{position:relative;z-index:1}
-  @media (max-width:1100px){.sideArt{display:none}}
   .catBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
   #catSearch{flex:1;min-width:150px;font:inherit;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
   #newMangaBtn{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
@@ -189,8 +185,6 @@
 </style>
 </head>
 <body>
-<div class="sideArt" id="sideArtL" aria-hidden="true"></div>
-<div class="sideArt" id="sideArtR" aria-hidden="true"></div>
 <header>
   <div class="brand" id="brandHome"><span class="logo"><img src="logo.jpg" alt="AILector" onerror="this.remove()">A</span> AILector</div>
   <nav><button class="tab active" id="tabLib">Biblioteca</button><button class="tab" id="tabCom">Comunidad</button><button class="tab" id="tabLists">Listas</button><button class="tab" id="tabNews">Noticias</button><button class="tab" id="adminBtn" title="Modo administrador">🔒</button></nav>
@@ -207,8 +201,10 @@
     <div class="catBar">
       <input id="catSearch" placeholder="Buscar manga…">
       <select id="genreSel"><option value="">Todos los géneros</option></select>
+      <button id="wallBtn" class="smallBtn" title="Fondos de pantalla">🖼 Fondos</button>
       <button id="newMangaBtn">+ Nuevo manga</button>
     </div>
+    <div class="wallRow" id="wallRow" hidden></div>
     <div id="contSec" hidden style="display:flex;gap:8px"><button id="contBtn" class="primary" style="flex:1"></button><button id="contDismiss" title="Quitar">✕</button></div>
     <div class="libWrap">
       <div class="libMain" id="catSections"></div>
@@ -2040,8 +2036,7 @@ function applyHomeBg(){
     'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">' + homePatSvg(bg.p) + '</svg>') + '")';
   hv.style.backgroundColor = bg.c;
   hv.style.backgroundImage = img;
-  document.body.style.backgroundColor = bg.c;
-  document.body.style.backgroundImage = img;
+  applyWall();
   const cn = (HOME_COLORS.find(x=>x.c===bg.c)||{}).n || bg.c;
   const pn = ((HOME_PATS.find(x=>x.id===bg.p))||{}).n || bg.p;
   const cur = $('#bgCurrent');
@@ -2049,10 +2044,40 @@ function applyHomeBg(){
   document.querySelectorAll('#bgDots button').forEach(b => { b.style.outline = b.dataset.c === bg.c ? '2px solid var(--accent)' : 'none'; });
   document.querySelectorAll('#bgPats .smallBtn').forEach(b => { b.classList.toggle('primary', b.dataset.p === bg.p); });
 }
+const WALLS = [
+  {n:'Hexágonos', u:'https://user.uploads.dev/file/bdd6f6a431eb1406e14d10a0473c89c0.png'},
+  {n:'Luna', u:'https://user.uploads.dev/file/b7576b61515ac996b4dbbd6f4093585a.png'},
+  {n:'Castillo', u:'https://user.uploads.dev/file/36a8791b643e327ec7efd626abc9f0fb.png'},
+  {n:'Luna roja', u:'https://user.uploads.dev/file/945e1de2d7316db2a8731efbe67ffe10.png'},
+  {n:'Torii', u:'https://user.uploads.dev/file/ea87ba9e2b4964f1e22fa2e9d31f3bd3.png'},
+  {n:'Neón', u:'https://user.uploads.dev/file/d61d760d0e56cf320757abde0b9bcfc4.png'},
+];
+function getWall(){ try { const i = +localStorage.getItem('sl-wall'); if (WALLS[i]) return i; } catch(e){} return 1; }
+function applyWall(){
+  const w = WALLS[getWall()];
+  document.body.style.backgroundImage = 'url("' + w.u + '")';
+  document.body.style.backgroundSize = 'cover';
+  document.body.style.backgroundPosition = 'center top';
+  document.body.style.backgroundAttachment = 'fixed';
+  document.body.style.backgroundColor = '#14101d';
+  document.querySelectorAll('#wallRow img').forEach(im => { im.classList.toggle('on', +im.dataset.i === getWall()); });
+}
+function buildWallRow(){
+  const r = $('#wallRow'); if (!r || r.children.length) return;
+  WALLS.forEach((w, i) => {
+    const im = document.createElement('img');
+    im.src = w.u; im.title = w.n; im.dataset.i = i; im.loading = 'lazy';
+    im.onclick = () => { try { localStorage.setItem('sl-wall', i); } catch(e){} applyWall(); };
+    r.appendChild(im);
+  });
+  applyWall();
+}
+$('#wallBtn').onclick = () => { const r = $('#wallRow'); r.hidden = !r.hidden; };
 updateAdminBtn();
 applyReadPrefs();
 applySideBg();
 buildSidePicker();
+buildWallRow();
 applyHomeBg();
 applyTheme();
 updateAuthUI();
