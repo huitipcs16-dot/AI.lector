@@ -2034,8 +2034,9 @@ function applyHomeBg(){
   const bg = getHomeBg();
   const img = bg.p === 'liso' ? 'none' :
     'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">' + homePatSvg(bg.p) + '</svg>') + '")';
-  hv.style.backgroundColor = bg.c;
-  hv.style.backgroundImage = img;
+  hv.style.backgroundColor = 'rgba(16,18,26,.72)';
+  hv.style.backgroundImage = 'none';
+  hv.style.backdropFilter = 'blur(3px)';
   applyWall();
   const cn = (HOME_COLORS.find(x=>x.c===bg.c)||{}).n || bg.c;
   const pn = ((HOME_PATS.find(x=>x.id===bg.p))||{}).n || bg.p;
