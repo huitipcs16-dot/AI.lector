@@ -2,7 +2,7 @@
 'use strict';
 const ADMIN_HASH = '3219d5d0cef1ccbe929092f051421595b3bd32e8a072b7241306e815a0ab749d';
 const META_SLIME = {
-  rating: 9.2, demographic: 'Shounen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'cover.jpg',
+  rating: 9.2, demographic: 'Shounen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'img/cover.jpg',
   genres: ['Acción','Aventura','Magia','Reencarnación'],
   synopsis: 'Un hombre, que al tratar de salvar a su compañero de trabajo y su novia, fue apuñalado por un ladrón que escapaba. Mientras moría desangrado escuchó una voz extraña. Esta voz escuchó su lamento y le dio la Habilidad Única "Gran Sabio". Ahora ha reencarnado como un Slime en otro mundo. ¿Será este el inicio de una emocionante aventura?',
   sinonimos: 'Tensei Shitara Slime Datta Ken, 転生したらスライムだった件',
@@ -10,13 +10,13 @@ const META_SLIME = {
   counts: {leido:388, pendiente:844, siguiendo:5586, favorito:1790, tengo:126, abandonado:11}
 };
 const META_VIDA = {
-  rating: 8.0, demographic: 'Seinen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'cover2.jpg',
+  rating: 8.0, demographic: 'Seinen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'img/cover2.jpg',
   genres: [], synopsis: 'Sinopsis disponible próximamente.',
   sinonimos: '', autores: [], arte: [], subidoPor: '',
   counts: {leido:0, pendiente:0, siguiendo:0, favorito:0, tengo:0, abandonado:0}
 };
 const META_OVER = {
-  rating: 3.9, demographic: 'Seinen', tipo: 'MANGA', estado: 'Completado', cover: 'cover3.jpg',
+  rating: 3.9, demographic: 'Seinen', tipo: 'MANGA', estado: 'Completado', cover: 'img/cover3.jpg',
   genres: ['Acción','Aventura','Comedia','Drama','Fantasía'],
   synopsis: '¿Qué haces cuando tu videojuego favorito cierra sus servidores? Momonga decidió quedarse conectado hasta el final. Pero cuando todo se apaga, se ve transportado al mundo del juego, convertido en su avatar esqueleto, con sus increíbles poderes mágicos incluidos. ¿Y si él es el villano de su propia historia?',
   sinonimos: 'Overlord, オーバーロード, El soberano supremo, Повелитель',
