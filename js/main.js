@@ -39,8 +39,17 @@ const META_IRUMA = {
   autores: ['nishi','osamu'], arte: [], subidoPor: 'TMO Bot',
   counts: {leido:396, pendiente:1000, siguiendo:5758, favorito:1936, tengo:195, abandonado:13}
 };
+const META_NONBIRI = {
+  rating: 7.7, demographic: 'Shounen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'img/cover6.jpg',
+  genres: ['Aventura','Harem','Reencarnación'],
+  synopsis: 'Un típico oficinista que no hacía más que trabajar murió por causa de una enfermedad a sus 39 años. Machio Hiraku tiene la oportunidad de renacer en otro mundo muy diferente al suyo. Cuando Dios le pregunta cuál es su deseo en compensación de su vida pasada, solicita tener un cuerpo inmune a cualquier enfermedad. Conmovido, Dios se lo concede y le permite un segundo deseo, a lo que solicita vivir en un lugar tranquilo.',
+  sinonimos: 'Isekai Nonbiri Nōka, Farming Life in Another World',
+  autores: ['naito kinosuke'], arte: ['yasuyuki tsurugi'], subidoPor: 'TMO Bot',
+  counts: {leido:94, pendiente:389, siguiendo:1371, favorito:408, tengo:68, abandonado:14}
+};
 function baseChapters(mid){
   if (mid === 4) return (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA : []);
+  if (mid === 5) return (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI : []);
   if (mid === 2) return (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD : []);
   if (mid === 1) return (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []);
   if (mid === 3) return (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI : []);
@@ -141,6 +150,7 @@ function mangaList(){
     {title: 'Overlord', meta: META_OVER, chapters: (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD.slice() : [])},
     {title: 'Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka', meta: META_DAN, chapters: (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI.slice() : [])},
     {title: 'Mairimashita! Iruma-kun', meta: META_IRUMA, chapters: (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA.slice() : [])},
+    {title: 'Isekai Nonbiri Nouka', meta: META_NONBIRI, chapters: (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI.slice() : [])},
   ];
   base.forEach((m, idx) => {
     const hid = (ov.hidden || {})[idx] || {};
@@ -1347,6 +1357,7 @@ function buildDataJs(){
   const chOver = (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD : []).map(c => Object.assign({}, c));
   const chDan = (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI : []).map(c => Object.assign({}, c));
   const chIruma = (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA : []).map(c => Object.assign({}, c));
+  const chNonbiri = (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI : []).map(c => Object.assign({}, c));
   for (const a of (getOv().added || [])){
     if (a.manga === 0 && !ch.some(c => c.num === a.num))
       ch.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
@@ -1358,13 +1369,16 @@ function buildDataJs(){
       chDan.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
     if (a.manga === 4 && !chIruma.some(c => c.num === a.num))
       chIruma.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
+    if (a.manga === 5 && !chNonbiri.some(c => c.num === a.num))
+      chNonbiri.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
   }
   ch.sort((a,b)=>a.num-b.num);
   chVida.sort((a,b)=>a.num-b.num);
   chOver.sort((a,b)=>a.num-b.num);
   chDan.sort((a,b)=>a.num-b.num);
   chIruma.sort((a,b)=>a.num-b.num);
-  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\nconst CHAPTERS_OVERLORD = ' + JSON.stringify(chOver) + ';\nconst CHAPTERS_DANMACHI = ' + JSON.stringify(chDan) + ';\nconst CHAPTERS_IRUMA = ' + JSON.stringify(chIruma) + ';\n';
+  chNonbiri.sort((a,b)=>a.num-b.num);
+  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\nconst CHAPTERS_OVERLORD = ' + JSON.stringify(chOver) + ';\nconst CHAPTERS_DANMACHI = ' + JSON.stringify(chDan) + ';\nconst CHAPTERS_IRUMA = ' + JSON.stringify(chIruma) + ';\nconst CHAPTERS_NONBIRI = ' + JSON.stringify(chNonbiri) + ';\n';
 }
 $('#ghPubData').onclick = () => ghPut('data.js', buildDataJs(), 'Actualizar capítulos desde AILector');
 $('#ghPubIndex').onclick = async () => {
