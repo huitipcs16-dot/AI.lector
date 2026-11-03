@@ -31,7 +31,16 @@ const META_DAN = {
   autores: ['Oomori Fujino'], arte: ['Kunieda'], subidoPor: 'TMO Bot',
   counts: {leido:5, pendiente:18, siguiendo:19, favorito:6, tengo:2, abandonado:1}
 };
+const META_IRUMA = {
+  rating: 9.4, demographic: 'Shounen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'img/cover5.jpg',
+  genres: ['Sobrenatural','Magia','Vida Escolar','Demonios'],
+  synopsis: 'Descubre la sorprendente historia de Suzuki Iruma, un joven vendido a un demonio por sus irresponsables padres a cambio de dinero. Sin previo aviso, Iruma se ve obligado a vivir con su misterioso nuevo "padre" demoníaco y a asistir a una escuela en el Mundo Demoníaco. Acompaña a Iruma kun en esta extraordinaria aventura escolar, donde lo sobrenatural se mezcla con el día a día en una trama llena de humor, desafíos y giros inesperados.',
+  sinonimos: 'Mairimashita! Iruma-kun, Welcome to Demon School! Iruma-kun, 魔入りました!入間くん',
+  autores: ['nishi','osamu'], arte: [], subidoPor: 'TMO Bot',
+  counts: {leido:396, pendiente:1000, siguiendo:5758, favorito:1936, tengo:195, abandonado:13}
+};
 function baseChapters(mid){
+  if (mid === 4) return (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA : []);
   if (mid === 2) return (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD : []);
   if (mid === 1) return (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []);
   if (mid === 3) return (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI : []);
@@ -131,6 +140,7 @@ function mangaList(){
     {title: 'La Vida Después de la Muerte', meta: META_VIDA, chapters: (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA.slice() : [])},
     {title: 'Overlord', meta: META_OVER, chapters: (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD.slice() : [])},
     {title: 'Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka', meta: META_DAN, chapters: (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI.slice() : [])},
+    {title: 'Mairimashita! Iruma-kun', meta: META_IRUMA, chapters: (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA.slice() : [])},
   ];
   base.forEach((m, idx) => {
     const hid = (ov.hidden || {})[idx] || {};
@@ -590,6 +600,13 @@ function makeSheet(idx, active){
   try { img.referrerPolicy = 'no-referrer'; } catch(e){}
   img.draggable = false;
   if (p && p.url) img.src = p.url;
+  img.onerror = () => {
+    img.dataset.err = '1';
+    img.alt = 'No se pudo cargar · toca para reintentar';
+    img.title = 'Toca para reintentar';
+    img.style.cursor = 'pointer';
+    img.onclick = () => { img.style.cursor = ''; img.src = p.url + (p.url.indexOf('?') >= 0 ? '&' : '?') + 'r=' + Date.now(); };
+  };
   d.appendChild(img);
   const bx = document.createElement('div');
   bx.className = 'boxes';
@@ -679,6 +696,8 @@ function renderThumbs(){
   const t = $('#thumbs'); t.innerHTML = '';
   state.pages.forEach((p, i) => {
     const im = document.createElement('img');
+    try { im.referrerPolicy = 'no-referrer'; } catch(e){}
+    im.onerror = () => { im.style.opacity = '.25'; };
     im.src = p.url;
     im.className = i === state.pageIndex ? 'active' : '';
     im.onclick = () => goToPage(i);
@@ -1327,6 +1346,7 @@ function buildDataJs(){
   const chVida = (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []).map(c => Object.assign({}, c));
   const chOver = (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD : []).map(c => Object.assign({}, c));
   const chDan = (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI : []).map(c => Object.assign({}, c));
+  const chIruma = (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA : []).map(c => Object.assign({}, c));
   for (const a of (getOv().added || [])){
     if (a.manga === 0 && !ch.some(c => c.num === a.num))
       ch.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
@@ -1336,12 +1356,15 @@ function buildDataJs(){
       chVida.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
     if (a.manga === 3 && !chDan.some(c => c.num === a.num))
       chDan.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
+    if (a.manga === 4 && !chIruma.some(c => c.num === a.num))
+      chIruma.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
   }
   ch.sort((a,b)=>a.num-b.num);
   chVida.sort((a,b)=>a.num-b.num);
   chOver.sort((a,b)=>a.num-b.num);
   chDan.sort((a,b)=>a.num-b.num);
-  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\nconst CHAPTERS_OVERLORD = ' + JSON.stringify(chOver) + ';\nconst CHAPTERS_DANMACHI = ' + JSON.stringify(chDan) + ';\n';
+  chIruma.sort((a,b)=>a.num-b.num);
+  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\nconst CHAPTERS_OVERLORD = ' + JSON.stringify(chOver) + ';\nconst CHAPTERS_DANMACHI = ' + JSON.stringify(chDan) + ';\nconst CHAPTERS_IRUMA = ' + JSON.stringify(chIruma) + ';\n';
 }
 $('#ghPubData').onclick = () => ghPut('data.js', buildDataJs(), 'Actualizar capítulos desde AILector');
 $('#ghPubIndex').onclick = async () => {
