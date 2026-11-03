@@ -23,9 +23,18 @@ const META_OVER = {
   autores: ['maruyama kugane'], arte: ['miyama fugin'], subidoPor: '',
   counts: {leido:0, pendiente:0, siguiendo:0, favorito:0, tengo:0, abandonado:0}
 };
+const META_DAN = {
+  rating: 7.2, demographic: 'Seinen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'img/cover4.jpg',
+  genres: ['Acción','Aventura','Comedia','Drama','Fantasía','Romance'],
+  synopsis: 'Bell Cranel solo intenta encontrar su camino en el mundo. Por supuesto, en su caso, el "mundo" es una enorme mazmorra llena de monstruos bajo una ciudad gobernada por dioses y diosas con demasiado tiempo libre. Tiene grandes sueños, pero no duran más cuando una niña en el callejón le pone cara a cara con la chica de sus sueños.',
+  sinonimos: 'DanMachi, Is It Wrong to Try to Pick Up Girls in a Dungeon?, ダンまち',
+  autores: ['Oomori Fujino'], arte: ['Kunieda'], subidoPor: 'TMO Bot',
+  counts: {leido:5, pendiente:18, siguiendo:19, favorito:6, tengo:2, abandonado:1}
+};
 function baseChapters(mid){
   if (mid === 2) return (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD : []);
   if (mid === 1) return (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []);
+  if (mid === 3) return (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI : []);
   return CHAPTERS;
 }
 const $ = s => document.querySelector(s);
@@ -121,6 +130,7 @@ function mangaList(){
     {title: MANGA.title, meta: META_SLIME, chapters: CHAPTERS.slice()},
     {title: 'La Vida Después de la Muerte', meta: META_VIDA, chapters: (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA.slice() : [])},
     {title: 'Overlord', meta: META_OVER, chapters: (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD.slice() : [])},
+    {title: 'Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka', meta: META_DAN, chapters: (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI.slice() : [])},
   ];
   base.forEach((m, idx) => {
     const hid = (ov.hidden || {})[idx] || {};
@@ -1316,6 +1326,7 @@ function buildDataJs(){
   const ch = CHAPTERS.map(c => Object.assign({}, c));
   const chVida = (typeof CHAPTERS_VIDA !== 'undefined' ? CHAPTERS_VIDA : []).map(c => Object.assign({}, c));
   const chOver = (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD : []).map(c => Object.assign({}, c));
+  const chDan = (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI : []).map(c => Object.assign({}, c));
   for (const a of (getOv().added || [])){
     if (a.manga === 0 && !ch.some(c => c.num === a.num))
       ch.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
@@ -1323,11 +1334,14 @@ function buildDataJs(){
       chOver.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
     if (a.manga === 1 && !chVida.some(c => c.num === a.num))
       chVida.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
+    if (a.manga === 3 && !chDan.some(c => c.num === a.num))
+      chDan.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
   }
   ch.sort((a,b)=>a.num-b.num);
   chVida.sort((a,b)=>a.num-b.num);
   chOver.sort((a,b)=>a.num-b.num);
-  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\nconst CHAPTERS_OVERLORD = ' + JSON.stringify(chOver) + ';\n';
+  chDan.sort((a,b)=>a.num-b.num);
+  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\nconst CHAPTERS_OVERLORD = ' + JSON.stringify(chOver) + ';\nconst CHAPTERS_DANMACHI = ' + JSON.stringify(chDan) + ';\n';
 }
 $('#ghPubData').onclick = () => ghPut('data.js', buildDataJs(), 'Actualizar capítulos desde AILector');
 $('#ghPubIndex').onclick = async () => {
