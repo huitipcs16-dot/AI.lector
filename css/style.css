@@ -268,6 +268,14 @@ nav{gap:5px;margin-left:auto}
 .secHead{color:#d5c5ff;font-size:16px;letter-spacing:.1px;margin:26px 0 12px;display:flex;align-items:center;gap:10px}
 .secHead::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,rgba(173,143,255,.22),transparent)}
 .catGrid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:15px}
+.carWrap{position:relative}
+.carRail{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:4px 2px 10px}
+.carRail::-webkit-scrollbar{display:none}
+.carRail .mCard{flex:0 0 auto;width:180px;scroll-snap-align:start}
+.carBtn{position:absolute;top:38%;transform:translateY(-50%);z-index:3;width:44px;height:64px;border-radius:12px;background:rgba(10,12,20,.72);border:1px solid rgba(173,155,255,.35);color:#fff;font-size:26px;font-weight:900;backdrop-filter:blur(6px);padding:0;cursor:pointer}
+.carBtn:hover{background:#7b2ff7;border-color:#7b2ff7}
+.carL{left:-10px}.carR{right:-10px}
+@media (max-width:640px){.carRail .mCard{width:150px}.carL{left:0}.carR{right:0}}
 .mCard{display:flex;flex-direction:column;background:linear-gradient(180deg,#1a1d32,#111525);border:1px solid rgba(173,155,255,.14);border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.14);transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease}
 .mCard:hover{transform:translateY(-6px);border-color:rgba(178,146,255,.6);box-shadow:0 18px 34px rgba(0,0,0,.3),0 0 24px rgba(130,91,225,.12)}
 .mCoverWrap{order:1;aspect-ratio:3/4.15;background:#0a0d19}

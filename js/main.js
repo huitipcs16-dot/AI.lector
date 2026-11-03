@@ -201,6 +201,17 @@ function mangaCard(m, idx, favs){
   card.onclick = () => { state.manga = idx; openDetail(); };
   return card;
 }
+function carWrap(grid){
+  const w = document.createElement('div'); w.className = 'carWrap';
+  const bL = document.createElement('button'); bL.className = 'carBtn carL'; bL.textContent = '‹'; bL.title = 'Anterior';
+  const bR = document.createElement('button'); bR.className = 'carBtn carR'; bR.textContent = '›'; bR.title = 'Siguiente';
+  const step = () => { const c = grid.querySelector('.mCard'); return c ? c.offsetWidth + 14 : 300; };
+  bL.onclick = () => grid.scrollBy({left: -step(), behavior: 'smooth'});
+  bR.onclick = () => grid.scrollBy({left: step(), behavior: 'smooth'});
+  grid.classList.add('carRail');
+  w.appendChild(bL); w.appendChild(grid); w.appendChild(bR);
+  return w;
+}
 function renderCards(q){
   const secs = $('#catSections'); if (!secs) return;
   secs.innerHTML = '';
@@ -220,7 +231,7 @@ function renderCards(q){
   const g0 = document.createElement('div');
   g0.className = 'catGrid';
   pop.forEach(e => g0.appendChild(mangaCard(e.m, e.idx, favs)));
-  secs.appendChild(g0);
+  secs.appendChild(carWrap(g0));
   const groups = {};
   list.forEach(e => { const d = e.m.meta.demographic || 'Otros'; (groups[d] = groups[d] || []).push(e); });
   Object.keys(groups).sort().forEach(d => {
@@ -230,7 +241,7 @@ function renderCards(q){
     const g = document.createElement('div');
     g.className = 'catGrid';
     groups[d].forEach(e => g.appendChild(mangaCard(e.m, e.idx, favs)));
-    secs.appendChild(g);
+    secs.appendChild(carWrap(g));
   });
   renderTop();
 }
