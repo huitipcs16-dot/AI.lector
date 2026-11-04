@@ -1,51 +1,73 @@
-/* Solo Leveling — Carátula PWA | sw.js (service worker offline) */
-const CACHE = 'solo-leveling-caratula-v1';
-const SHELL = [
-  './',
-  'index.html',
-  'css/style.css',
-  'js/app.js',
-  'img/cover.png',
-  'img/icon-512.png',
-  'img/icon-192.png',
-  'manifest.webmanifest'
-];
+/* AILector service worker: app shell + capítulos offline */
+const SHELL_CACHE = 'ailector-shell-anime-premium-v3';
+const CHAP_CACHE = 'ailector-ch';
+const SHELL = ['./', 'index.html', 'css/style.css', 'js/main.js', 'js/data.js', 'img/cover.jpg', 'img/cover2.jpg', 'img/cover3.jpg', 'img/cover4.jpg', 'img/cover5.jpg', 'img/cover6.jpg', 'img/cover7.jpg', 'img/logo.jpg', 'img/logo-original.jpg', 'manifest.webmanifest', 'img/icon-512.png', 'img/anime-world-bg.webp'];
 
-self.addEventListener('install', function (e) {
-  e.waitUntil(
-    caches.open(CACHE).then(function (c) {
-      return Promise.all(SHELL.map(function (u) {
-        return c.add(u).catch(function () {});
-      }));
-    }).then(function () { return self.skipWaiting(); })
-  );
+self.addEventListener('install', e => {
+  e.waitUntil((async () => {
+    try {
+      const c = await caches.open(SHELL_CACHE);
+      for (const u of SHELL){
+        try { await c.add(u); } catch(err){}
+      }
+    } catch(err){}
+    self.skipWaiting();
+  })());
 });
 
-self.addEventListener('activate', function (e) {
-  e.waitUntil(
-    caches.keys().then(function (keys) {
-      return Promise.all(keys.map(function (k) {
-        if (k !== CACHE) return caches.delete(k);
-      }));
-    }).then(function () { return self.clients.claim(); })
-  );
+self.addEventListener('activate', e => {
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    for (const k of keys){
+      if (k !== SHELL_CACHE && k !== CHAP_CACHE) await caches.delete(k);
+    }
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', function (e) {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then(function (hit) {
-      if (hit) return hit;
-      return fetch(e.request).then(function (res) {
-        if (res && res.ok && new URL(e.request.url).origin === location.origin) {
-          var copy = res.clone();
-          caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+function isImage(u){
+  return /\.(webp|jpg|jpeg|png|gif|avif)(\?|$)/i.test(u) || u.includes('zonatmo.org');
+}
+
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = req.url;
+  e.respondWith((async () => {
+    if (isImage(url)){
+      // imágenes: caché primero (offline), luego red
+      try {
+        const hit = await caches.match(req, {cacheName: CHAP_CACHE});
+        if (hit) return hit;
+        const shell = await caches.match(req, {cacheName: SHELL_CACHE});
+        if (shell) return shell;
+      } catch(err){}
+      try {
+        const r = await fetch(req);
+        if (r && r.ok){
+          try { const c = await caches.open(CHAP_CACHE); c.put(req, r.clone()); } catch(err){}
         }
-        return res;
-      }).catch(function () {
-        if (e.request.mode === 'navigate') return caches.match('index.html');
-        return new Response('', { status: 504 });
-      });
-    })
-  );
+        return r;
+      } catch(err){
+        try {
+          const hit = await caches.match(req);
+          if (hit) return hit;
+        } catch(err2){}
+        return new Response('', {status: 504});
+      }
+    }
+    // app shell: red primero, luego caché
+    try {
+      const r = await fetch(req);
+      return r;
+    } catch(err){
+      const hit = await caches.match(req);
+      if (hit) return hit;
+      if (req.mode === 'navigate'){
+        const idx = await caches.match('index.html');
+        if (idx) return idx;
+      }
+      return new Response('', {status: 504});
+    }
+  })());
 });

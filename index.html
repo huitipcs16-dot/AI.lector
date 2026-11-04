@@ -3,80 +3,253 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Solo Leveling — Carátula</title>
-<meta name="description" content="Carátula de Solo Leveling (manhwa, Shounen, ★ 9.00, Finalizado). PWA instalable y offline.">
-<meta name="theme-color" content="#3a6335">
+<title>AILector — Universo Anime, Manga y Novelas</title>
+<link rel="icon" href="img/logo.jpg">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="img/icon-512.png">
-<link rel="apple-touch-icon" href="img/icon-512.png">
+<meta name="theme-color" content="#08091a">
+<meta name="description" content="Descubre manga, manhwa y novelas ligeras en el universo anime de ALlector.">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<header>
+  <div class="brand" id="brandHome"><span class="logo"><img src="img/logo.jpg" alt="AILector" onerror="this.remove()">A</span> AILector</div>
+  <nav><button class="tab active" id="tabLib">Biblioteca</button><button class="tab" id="tabCom">Comunidad</button><button class="tab" id="tabLists">Listas</button><button class="tab" id="tabNews">Noticias</button><button class="tab" id="adminBtn" title="Modo administrador">🔒</button></nav>
+  <div class="hRight">
+    <button class="tab" id="themeBtn" title="Tema claro / oscuro">☀</button>
+    <button class="tab" id="authInBtn">Acceder</button>
+    <button class="tab primary" id="authUpBtn">Registrar</button>
+    <button class="tab" id="userChip" hidden></button>
+  </div>
+</header>
 <div class="wrap">
-  <div class="top">
-    <!-- Carátula: recreación fiel del PNG 2 -->
-    <section class="caratula" aria-label="Carátula de Solo Leveling">
-      <div class="tipo">MANHWA</div>
-      <div class="cover">
-        <img src="img/cover.png" alt="Portada de Solo Leveling — Sung Jin-Woo con dagas" width="756" height="912">
-        <span class="rate"><b>★</b> 9.00</span>
-        <div class="demo">Shounen</div>
+
+  <div id="homeView" class="panel">
+    <section class="homeHero" id="homeHero" aria-label="Bienvenida a ALlector">
+      <div class="heroGlow heroGlowOne"></div><div class="heroGlow heroGlowTwo"></div>
+      <div class="heroContent">
+        <span class="heroEyebrow"><span class="eyebrowDot"></span> TU UNIVERSO ANIME DE LECTURA</span>
+        <h1>Historias que te<br><span>llevan a otro mundo.</span></h1>
+        <p>Explora manga, manhwa y novelas ligeras. Descubre nuevos mundos y continúa leyendo donde lo dejaste.</p>
+        <div class="heroActions">
+          <button type="button" class="heroPrimary" id="heroExploreBtn">Explorar biblioteca <span aria-hidden="true">→</span></button>
+          <button type="button" class="heroSecondary" id="heroCommunityBtn">Conocer comunidad</button>
+        </div>
+        <div class="heroFoot"><span>✦ Biblioteca personal</span><span>✦ Lectura a tu ritmo</span><span>✦ Nuevos mundos cada día</span></div>
       </div>
-      <div class="vote-row">
-        <button id="likeBtn" aria-label="Me gusta">👍</button>
-        <button id="disBtn" aria-label="No me gusta">👎</button>
-      </div>
-      <div class="count-row">
-        <span>👍 <span id="likeN">961</span></span>
-        <span class="votos" id="votosN">980 votos</span>
-        <span><span id="disN">19</span> 👎</span>
-      </div>
+      <div class="heroArtwork" aria-hidden="true"><div class="artOrbit orbitA"></div><div class="artOrbit orbitB"></div><div class="artMoon"></div><div class="artShard shardA"></div><div class="artShard shardB"></div><div class="artBase"></div></div>
+      <div class="heroIndex">AL<span>·</span>01</div>
     </section>
+    <div class="libraryIntro"><div><span class="sectionKicker">DESCUBRE TU PRÓXIMA AVENTURA</span><h2>Explora la biblioteca</h2><p>Encuentra tu siguiente historia favorita.</p></div><span class="libraryMark">AILECTOR / LIBRARY</span></div>
+    <div class="catBar">
+      <input id="catSearch" placeholder="Buscar manga…">
+      <select id="genreSel"><option value="">Todos los géneros</option></select>
+      <button id="newMangaBtn">+ Nuevo manga</button>
+    </div>
+    <div id="contSec" hidden style="display:flex;gap:8px"><button id="contBtn" class="primary" style="flex:1"></button><button id="contDismiss" title="Quitar">✕</button></div>
+    <div class="libWrap">
+      <div class="libMain" id="catSections"></div>
+      <aside class="libSide"><h4>🏆 Top lectura</h4><div id="topRead"></div></aside>
+    </div>
+    <h3 id="histHead" hidden style="color:#7fb3ff;margin:18px 0 4px">🕘 Historial</h3>
+    <div style="margin:0 0 4px;text-align:right"><button class="smallBtn" id="histClear" hidden>Borrar todo</button></div>
+    <div id="histList"></div>
+  </div>
 
-    <!-- Info: datos del PNG 1 -->
-    <section class="info">
-      <h1>Solo Leveling</h1>
-      <div class="meta"><span>📖 204 capítulos</span><span>👁 249,488 visitas</span><span>🏷 Shounen</span></div>
-
-      <h3 class="label">DESCRIPCIÓN</h3>
-      <p class="desc" id="desc">Hace 10 años, después de que “La Puerta” conectara el mundo real con el mundo de los monstruos se abriera, algunas de las personas recibieron el poder de cazar los monstruos que vivían al otro lado de esta. Se les conoce como “cazadores”. Sin embargo, no todos los cazadores son poderosos. Sung Jin-Woo, un cazador de rango E, es alguien que tiene que arriesgar su vida en humildes calabozos, lo llaman el “más débil del mundo”<span class="dots">…</span><span class="more">. Hasta que un día, tras una incursión doble de rango D, Jin-Woo obtiene un poder misterioso: el Sistema, que le permite subir de nivel sin límites. De la presa más frágil al Monarca de las Sombras.</span></p>
-      <button id="verMas">▼ Ver más</button>
-
-      <h3 class="label">Géneros</h3>
-      <div class="chips">
-        <span class="chip">Acción</span><span class="chip">Aventura</span><span class="chip">Drama</span>
-        <span class="chip">Fantasía</span><span class="chip">Sobrenatural</span><span class="chip">Magia</span>
-        <span class="chip">Reencarnación</span><span class="chip">Artes Marciales</span>
-        <span class="chip">Apocalíptico</span><span class="chip">Ejército</span><span class="chip">Sistema de Niveles</span>
+  <div id="comView" class="panel" hidden>
+    <div class="comWrap">
+      <div class="comMenu">
+        <button class="active" data-cm="feed">🏠 Feed General</button>
+        <button data-cm="subidas">⬆ Últimas Subidas</button>
+        <button data-cm="biblio">📚 Mi Biblioteca</button>
       </div>
-
-      <h3 class="label">Estado</h3>
-      <div class="estado"><i></i>FINALIZADO</div>
-
-      <h3 class="label">Sinónimos</h3>
-      <div class="box">Solo Leveling; I Level Up Alone; Solo Leveling; Solo Leveling; Solo Leveling; ソロレベリング</div>
-
-      <h3 class="label">Autores</h3>
-      <div><span class="autor">✎ Chugong</span><span class="autor">✎ DUBU (REDICE Studio)</span></div>
-
-      <div class="fab-row">
-        <button id="shareBtn">🔗 Compartir</button>
-        <button id="instBtn" hidden>📲 Instalar app</button>
+      <div class="comMain">
+        <div class="banner"><b>COMUNIDAD AILECTOR</b><h2>¡Hola, lector! 👋</h2><p>Comparte, opina y conecta con la comunidad manga.</p></div>
+        <div id="comFeed">
+          <div class="listCard"><h4>⬆ Últimas subidas</h4><div id="comSubidas"></div></div>
+          <div class="listCard"><h4>💬 Feed General</h4><div id="utterBox"></div></div>
+        </div>
       </div>
-    </section>
+      <aside class="libSide libSide2"><h4>🔥 Tendencias</h4>
+        <div class="trendRow"><b>1.</b> #recomendación</div>
+        <div class="trendRow"><b>2.</b> #pregunta</div>
+        <div class="trendRow"><b>3.</b> #slime</div>
+        <h4 style="margin-top:14px">📜 Normas</h4>
+        <div class="normRow">✓ Respeta a todos</div>
+        <div class="normRow">✓ Nada de spam</div>
+        <div class="normRow">✓ Contenido de manga/anime</div>
+      </aside>
+    </div>
+  </div>
+  <div id="listsView" class="panel" hidden>    <div class="catBar">
+      <input id="newListName" placeholder="Nombre de la lista…" style="flex:1">
+      <button id="newListBtn" class="primary">+ Crear lista</button>
+    </div>
+    <div id="listsBox"></div>
+  </div>
+
+  <div id="newsView" class="panel" hidden>
+    <h3 style="color:#7fb3ff;margin:0 0 4px">🔥 Anime en emisión</h3>
+    <div id="newsAnime"><p style="color:var(--dim)">Cargando…</p></div>
+    <h3 style="color:#7fb3ff;margin:18px 0 4px">📚 Manga popular</h3>
+    <div id="newsManga"><p style="color:var(--dim)">Cargando…</p></div>
+    <p style="font-size:12px;color:var(--dim)">Tendencias de AniList.</p>
+  </div>
+
+  <div id="detailView" class="panel" hidden>
+    <div class="cdTop">
+      <div class="cdCover"><div class="mCoverWrap"><img id="dCover" src="img/cover.jpg" alt="Portada"></div></div>
+      <div class="cdInfo">
+        <h2 class="cdTitle" id="dTitle"></h2>
+        <div id="dMeta"></div>
+        <p class="cdSyn" id="dSyn"></p>
+        <div class="chipRow" id="dGenres"></div>
+        <div class="kv" id="dExtra"></div>
+      </div>
+    </div>
+    <div class="statRow" id="dStats"></div>
+    <div class="chapHead"><h3 id="chapHeadT">Capítulos</h3><span style="flex:1"></span><button class="smallBtn" id="favBtn" title="Favorito">🤍</button><button class="smallBtn" id="sortBtn" title="Cambiar orden">↓ Nuevos</button><button class="smallBtn" id="markAllBtn">Marcar todos</button><button class="smallBtn" id="unmarkAllBtn">Desmarcar todos</button></div>
+    <div id="chapList"></div>
+  </div>
+
+  <div id="readerView" class="panel" hidden>
+    <div id="bar">
+      <button id="backBtn" title="Volver">☰ Capítulos</button>
+      <button id="prevBtn" title="Página anterior">◀</button>
+      <button id="playBtn" class="primary" title="Leer en voz alta">▶ Escuchar</button>
+      <button id="nextBtn" title="Página siguiente">▶</button>
+      <button id="prevChapBtn" title="Capítulo anterior">⏮</button>
+      <button id="nextChapBtn" title="Capítulo siguiente">⏭</button>
+      <select id="modeSel" title="Idioma">
+        <option value="translation">Traducción</option>
+        <option value="original">Original</option>
+      </select>
+      <select id="rateSel" title="Velocidad">
+        <option value="0.9">0.9×</option>
+        <option value="1" selected>1×</option>
+        <option value="1.15">1.15×</option>
+        <option value="1.3">1.3×</option>
+      </select>
+      <button id="boxBtn" title="Cuadros de diálogo">💬</button>
+      <button id="dlBtn" title="Descargar capítulo para leer sin conexión">⬇</button>
+      <button id="shareBtn" title="Copiar enlace a esta página">🔗</button>
+      <button id="fsBtn" title="Pantalla completa">⛶</button>
+      <button id="setBtn" title="Ajustes">⚙</button>
+    </div>
+    <div id="pageTag"></div>
+    <div id="stage">
+      <div id="sheets"></div>
+    </div>
+    <div class="thumbs" id="thumbs"></div>
+    <div id="loader" hidden><span class="spin"></span> <span id="loadTxt">Cargando capítulo…</span></div>
+    <div id="status"></div>
+    <div id="trans"></div>
+  </div>
+
+</div>
+<div id="toast"></div>
+<div class="modal" id="setModal" hidden>
+  <div class="modalCard">
+    <h3>⚙ Ajustes <span style="float:right;cursor:pointer" id="setClose">✕</span></h3>
+    <div class="fRow">ANCHO DE LECTURA
+      <div id="rsWidthRow" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="smallBtn" data-w="estrecho">Estrecho</button>
+        <button class="smallBtn" data-w="normal">Normal</button>
+        <button class="smallBtn" data-w="ancho">Ancho</button>
+        <button class="smallBtn" data-w="completo">Completo</button>
+      </div>
+    </div>
+    <div class="fRow">FONDO
+      <div id="rsBgRow" style="display:flex;gap:10px">
+        <button class="bgDot" data-b="negro" title="Negro" style="width:34px;height:34px;border-radius:50%;background:#000;border:2px solid #555"></button>
+        <button class="bgDot" data-b="azul" title="Azul oscuro" style="width:34px;height:34px;border-radius:50%;background:#1a2030;border:2px solid #555"></button>
+        <button class="bgDot" data-b="marron" title="Marrón" style="width:34px;height:34px;border-radius:50%;background:#221a12;border:2px solid #555"></button>
+        <button class="bgDot" data-b="crema" title="Crema" style="width:34px;height:34px;border-radius:50%;background:#e8dcc8;border:2px solid #555"></button>
+        <button class="bgDot" data-b="blanco" title="Blanco" style="width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid #555"></button>
+      </div>
+    </div>
+    <div class="fRow">FONDOS LATERALES
+      <div id="rsSideImgs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <div id="rsSideCols" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="smallBtn" id="rsSideNone">Ninguno</button>
+        <button class="smallBtn" id="rsSideUp">📷 Subir foto</button>
+        <input type="file" id="rsSideFile" accept="image/*" hidden>
+      </div>
+    </div>
+    <div class="fRow">VELOCIDAD DE AUTO-SCROLL
+      <input type="range" id="rsSpeed" min="1" max="10" step="1" value="4" style="width:100%">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--dim)"><span>Rápido</span><span id="rsSpeedVal">4 s</span><span>Lento</span></div>
+    </div>
+    <div class="fRow">PASAR PÁGINAS SOLO
+      <div id="rsAutoRow" style="display:flex;gap:8px">
+        <button class="smallBtn" data-a="si">Sí</button>
+        <button class="smallBtn" data-a="no">No</button>
+      </div>
+    </div>
+    <div class="fRow">MODO DE LECTURA
+      <div id="rsModeRow" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="smallBtn" data-m="pages">📄 Páginas</button>
+        <button class="smallBtn" data-m="cascade">🌊 Cascada</button>
+      </div>
+    </div>
+    <div class="fRow">PÁGINA DOBLE (modo páginas)
+      <div id="rsSpreadRow" style="display:flex;gap:8px">
+        <button class="smallBtn" data-s="no">No</button>
+        <button class="smallBtn" data-s="si">Sí</button>
+      </div>
+    </div>
+    <div class="fRow">ZOOM (pellizca la imagen o usa los botones)
+      <div class="zoomRow"><button class="smallBtn" id="zoomOut">−</button><span id="zoomVal">100%</span><button class="smallBtn" id="zoomIn">+</button></div>
+    </div>
+    <div class="fRow">CONTADOR DE VISITAS GLOBAL (GoatCounter, opcional)
+      <input id="rsGc" placeholder="código, ej. ailector" style="width:100%">
+      <div style="font-size:12px;color:var(--dim)">Crea tu contador gratis en goatcounter.com y pega el código.</div>
+    </div>
+    <div class="fRow">ATAJOS DE TECLADO
+      <div style="font-size:13px;line-height:2">← / → Página anterior / siguiente<br>A / D Capítulo anterior / siguiente<br>Espacio Reproducir / pausar<br>RePág / AvPág Pasar página<br>F Pantalla completa</div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="loginModal" hidden>
+  <div class="modalCard">
+    <h3>🔒 Modo administrador</h3>
+    <div class="fRow">Usuario<input id="adminUser" value="admin" autocomplete="username"></div>
+    <div class="fRow">Contraseña<input type="password" id="adminPass" autocomplete="current-password"></div>
+    <div class="mBtns"><button id="loginCancel">Cancelar</button><button class="primary" id="loginGo">Entrar</button></div>
+  </div>
+</div>
+<div class="modal" id="authModal" hidden>
+  <div class="modalCard">
+    <h3 id="authTitle">👤 Acceder</h3>
+    <div class="fRow">Usuario<input id="authUser" autocomplete="username" maxlength="24"></div>
+    <div class="fRow">Contraseña<input type="password" id="authPass" autocomplete="current-password"></div>
+    <div class="mBtns"><button id="authCancel">Cancelar</button><button class="primary" id="authGo">Entrar</button></div>
+    <div style="font-size:12px;color:var(--dim)">La cuenta vive solo en este dispositivo.</div>
+  </div>
+</div>
+<div class="modal" id="adminModal" hidden>
+  <div class="modalCard">
+    <h3>🔓 Administración <span style="font-size:11px;color:var(--dim)">(este dispositivo)</span></h3>
+    <div class="fRow">Manga
+      <select id="admManga"><option value="0">Tensei Shitara Slime Datta Ken</option><option value="1">La Vida Después de la Muerte</option><option value="2">Overlord</option><option value="3">Dungeon ni Deai</option><option value="4">Mairimashita! Iruma-kun</option><option value="5">Isekai Nonbiri Nouka</option><option value="6">Isekai Meikyuu de Harem wo</option></select>
+    </div>
+    <div class="fRow">Enlace del visor o imágenes directas (una por línea)<textarea id="admUrl" placeholder="https://zonatmo.org/view_uploads/…"></textarea></div>
+    <div class="fRow">Título (opcional)<input id="admTitle" placeholder="Cap. 31"></div>
+    <div class="mBtns"><button class="primary" id="admAdd">+ Añadir capítulo</button></div>
+    <h3 style="margin-top:16px">📊 Estadísticas (este dispositivo)</h3>
+    <div id="admStats" style="font-size:13px;line-height:1.9"></div>
+    <h3 style="margin-top:16px">⬆ Publicar en GitHub</h3>
+    <div class="fRow">Repo (dueño/nombre)<input id="ghRepo" placeholder="usuario/AI.lector" autocomplete="off"></div>
+    <div class="fRow">Token (solo este dispositivo)<input type="password" id="ghToken" placeholder="github_pat_…" autocomplete="off"></div>
+    <div class="mBtns"><button id="ghPubData">Publicar data.js</button><button id="ghPubIndex">Publicar index.html</button></div>
+    <div style="font-size:12px;color:var(--dim)">El token necesita permiso Contents (lectura y escritura). Guárdalo bien: queda en este navegador.</div>
+    <h3 style="margin-top:16px">Capítulos</h3>
+    <div id="admList"></div>
+    <div class="mBtns"><button id="admExport">⬇ Exportar cambios</button><button id="admLogout">Salir</button><button id="admClose">Cerrar</button></div>
   </div>
 </div>
 
-<!-- Stats inferiores del PNG 1 -->
-<footer class="stats">
-  <div class="stat"><b>4,806</b>✅ Leído</div>
-  <div class="stat"><b>974</b>🕐 Pendiente</div>
-  <div class="stat"><b>2,030</b>▶ Siguiendo</div>
-  <div class="stat"><b>2,435</b>🤍 Favorito</div>
-  <div class="stat"><b>291</b>📦 Lo tengo</div>
-  <div class="stat"><b>28</b>🚩 Abandonado</div>
-</footer>
-<div id="toast"></div>
-<script src="js/app.js"></script>
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>

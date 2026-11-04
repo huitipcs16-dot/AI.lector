@@ -1,16 +1,16 @@
 {
-  "name": "Solo Leveling — Carátula",
-  "short_name": "Solo Leveling",
-  "description": "Carátula de Solo Leveling (manhwa, Shounen, 9.00). PWA instalable y offline.",
+  "name": "AILector",
+  "short_name": "AILector",
+  "description": "Tu universo anime de manga, manhwa y novelas ligeras",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#3a6335",
-  "theme_color": "#3a6335",
+  "orientation": "any",
+  "background_color": "#08091a",
+  "theme_color": "#08091a",
   "icons": [
     { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }
+    { "src": "img/logo.jpg", "sizes": "409x409", "type": "image/jpeg", "purpose": "any" }
   ]
 }
