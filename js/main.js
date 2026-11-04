@@ -55,7 +55,16 @@ const META_HAREM = {
   autores: ['hyoujuu issei (tukibuto)','sogano shachi','hyoujuu','issei'], arte: ['hyoujuu issei (tukibuto)'], subidoPor: 'TMO Bot',
   counts: {leido:156, pendiente:613, siguiendo:2281, favorito:648, tengo:142, abandonado:52}
 };
+const META_SOLO = {
+  rating: 9.0, demographic: 'Shounen', tipo: 'MANHWA', estado: 'FINALIZADO', cover: 'img/cover-solo.jpg',
+  genres: ['Acción','Aventura','Drama','Fantasía','Sobrenatural','Magia','Reencarnación','Artes Marciales','Apocalíptico','Ejército','Sistema de Niveles'],
+  synopsis: 'Hace 10 años, después de que "La Puerta" conectara el mundo real con el mundo de los monstruos se abriera, algunas de las personas recibieron el poder de cazar los monstruos que vivían al otro lado de esta. Se les conoce como "cazadores". Sin embargo, no todos los cazadores son poderosos. Sung Jin-Woo, un cazador de rango E, es alguien que tiene que arriesgar su vida en humildes calabozos, lo llaman el "más débil del mundo"...',
+  sinonimos: 'Solo Leveling; I Level Up Alone; Ore dake Level Up na Ken; ソロレベリング',
+  autores: ['Chugong'], arte: ['DUBU (REDICE Studio)'], subidoPor: '',
+  counts: {leido:4806, pendiente:974, siguiendo:2030, favorito:2435, tengo:291, abandonado:28}
+};
 function baseChapters(mid){
+  if (mid === 7) return (typeof CHAPTERS_SOLO !== 'undefined' ? CHAPTERS_SOLO : []);
   if (mid === 6) return (typeof CHAPTERS_HAREM !== 'undefined' ? CHAPTERS_HAREM : []);
   if (mid === 4) return (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA : []);
   if (mid === 5) return (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI : []);
@@ -161,6 +170,7 @@ function mangaList(){
     {title: 'Mairimashita! Iruma-kun', meta: META_IRUMA, chapters: (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA.slice() : [])},
     {title: 'Isekai Nonbiri Nouka', meta: META_NONBIRI, chapters: (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI.slice() : [])},
     {title: 'Isekai Meikyuu de Harem wo', meta: META_HAREM, chapters: (typeof CHAPTERS_HAREM !== 'undefined' ? CHAPTERS_HAREM.slice() : [])},
+    {title: 'Solo Leveling', meta: META_SOLO, chapters: (typeof CHAPTERS_SOLO !== 'undefined' ? CHAPTERS_SOLO.slice() : [])},
   ];
   base.forEach((m, idx) => {
     const hid = (ov.hidden || {})[idx] || {};
