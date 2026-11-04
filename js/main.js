@@ -47,7 +47,16 @@ const META_NONBIRI = {
   autores: ['naito kinosuke'], arte: ['yasuyuki tsurugi'], subidoPor: 'TMO Bot',
   counts: {leido:94, pendiente:389, siguiendo:1371, favorito:408, tengo:68, abandonado:14}
 };
+const META_HAREM = {
+  rating: 8.1, demographic: 'Seinen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'img/cover7.jpg',
+  genres: ['Acción','Aventura','Ecchi','Harem','Magia'],
+  synopsis: 'Michio Kage quiere despedirse del mundo, el cual lo ha tratado mal y piensa en el suicidio, cuando encuentra un sitio web que le pregunta: si no te gusta este mundo, ¿Por qué no abandonarlo e ir a otro?',
+  sinonimos: 'Isekai Meikyuu de Harem wo, 異世界迷宮でハーレムを',
+  autores: ['hyoujuu issei (tukibuto)','sogano shachi','hyoujuu','issei'], arte: ['hyoujuu issei (tukibuto)'], subidoPor: 'TMO Bot',
+  counts: {leido:156, pendiente:613, siguiendo:2281, favorito:648, tengo:142, abandonado:52}
+};
 function baseChapters(mid){
+  if (mid === 6) return (typeof CHAPTERS_HAREM !== 'undefined' ? CHAPTERS_HAREM : []);
   if (mid === 4) return (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA : []);
   if (mid === 5) return (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI : []);
   if (mid === 2) return (typeof CHAPTERS_OVERLORD !== 'undefined' ? CHAPTERS_OVERLORD : []);
@@ -151,6 +160,7 @@ function mangaList(){
     {title: 'Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka', meta: META_DAN, chapters: (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI.slice() : [])},
     {title: 'Mairimashita! Iruma-kun', meta: META_IRUMA, chapters: (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA.slice() : [])},
     {title: 'Isekai Nonbiri Nouka', meta: META_NONBIRI, chapters: (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI.slice() : [])},
+    {title: 'Isekai Meikyuu de Harem wo', meta: META_HAREM, chapters: (typeof CHAPTERS_HAREM !== 'undefined' ? CHAPTERS_HAREM.slice() : [])},
   ];
   base.forEach((m, idx) => {
     const hid = (ov.hidden || {})[idx] || {};
@@ -1358,6 +1368,7 @@ function buildDataJs(){
   const chDan = (typeof CHAPTERS_DANMACHI !== 'undefined' ? CHAPTERS_DANMACHI : []).map(c => Object.assign({}, c));
   const chIruma = (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA : []).map(c => Object.assign({}, c));
   const chNonbiri = (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI : []).map(c => Object.assign({}, c));
+  const chHarem = (typeof CHAPTERS_HAREM !== 'undefined' ? CHAPTERS_HAREM : []).map(c => Object.assign({}, c));
   for (const a of (getOv().added || [])){
     if (a.manga === 0 && !ch.some(c => c.num === a.num))
       ch.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
@@ -1371,6 +1382,8 @@ function buildDataJs(){
       chIruma.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
     if (a.manga === 5 && !chNonbiri.some(c => c.num === a.num))
       chNonbiri.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
+    if (a.manga === 6 && !chHarem.some(c => c.num === a.num))
+      chHarem.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
   }
   ch.sort((a,b)=>a.num-b.num);
   chVida.sort((a,b)=>a.num-b.num);
@@ -1378,7 +1391,8 @@ function buildDataJs(){
   chDan.sort((a,b)=>a.num-b.num);
   chIruma.sort((a,b)=>a.num-b.num);
   chNonbiri.sort((a,b)=>a.num-b.num);
-  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\nconst CHAPTERS_OVERLORD = ' + JSON.stringify(chOver) + ';\nconst CHAPTERS_DANMACHI = ' + JSON.stringify(chDan) + ';\nconst CHAPTERS_IRUMA = ' + JSON.stringify(chIruma) + ';\nconst CHAPTERS_NONBIRI = ' + JSON.stringify(chNonbiri) + ';\n';
+  chHarem.sort((a,b)=>a.num-b.num);
+  return '// Generado por AILector (admin)\nconst MANGA = ' + JSON.stringify(MANGA) + ';\nconst CHAPTERS = ' + JSON.stringify(ch) + ';\nconst CHAPTERS_VIDA = ' + JSON.stringify(chVida) + ';\nconst CHAPTERS_OVERLORD = ' + JSON.stringify(chOver) + ';\nconst CHAPTERS_DANMACHI = ' + JSON.stringify(chDan) + ';\nconst CHAPTERS_IRUMA = ' + JSON.stringify(chIruma) + ';\nconst CHAPTERS_NONBIRI = ' + JSON.stringify(chNonbiri) + ';\nconst CHAPTERS_HAREM = ' + JSON.stringify(chHarem) + ';\n';
 }
 $('#ghPubData').onclick = () => ghPut('data.js', buildDataJs(), 'Actualizar capítulos desde AILector');
 $('#ghPubIndex').onclick = async () => {

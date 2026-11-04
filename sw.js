@@ -1,7 +1,7 @@
 /* AILector service worker: app shell + capítulos offline */
 const SHELL_CACHE = 'ailector-shell-anime-premium-v3';
 const CHAP_CACHE = 'ailector-ch';
-const SHELL = ['./', 'index.html', 'css/style.css', 'js/main.js', 'js/data.js', 'img/cover.jpg', 'img/cover2.jpg', 'img/cover3.jpg', 'img/cover4.jpg', 'img/cover5.jpg', 'img/cover6.jpg', 'img/logo.jpg', 'img/logo-original.jpg', 'manifest.webmanifest', 'img/icon-512.png', 'img/anime-world-bg.webp'];
+const SHELL = ['./', 'index.html', 'css/style.css', 'js/main.js', 'js/data.js', 'img/cover.jpg', 'img/cover2.jpg', 'img/cover3.jpg', 'img/cover4.jpg', 'img/cover5.jpg', 'img/cover6.jpg', 'img/cover7.jpg', 'img/logo.jpg', 'img/logo-original.jpg', 'manifest.webmanifest', 'img/icon-512.png', 'img/anime-world-bg.webp'];
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
