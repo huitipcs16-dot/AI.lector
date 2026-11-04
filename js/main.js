@@ -55,25 +55,7 @@ const META_HAREM = {
   autores: ['hyoujuu issei (tukibuto)','sogano shachi','hyoujuu','issei'], arte: ['hyoujuu issei (tukibuto)'], subidoPor: 'TMO Bot',
   counts: {leido:156, pendiente:613, siguiendo:2281, favorito:648, tengo:142, abandonado:52}
 };
-const META_SOLO = {
-  rating: 9.0, demographic: 'Shounen', tipo: 'MANHWA', estado: 'FINALIZADO', cover: 'img/cover-solo.jpg',
-  genres: ['Acción','Aventura','Drama','Fantasía','Sobrenatural','Magia','Reencarnación','Artes Marciales','Apocalíptico','Ejército','Sistema de Niveles'],
-  synopsis: 'Hace 10 años, después de que "La Puerta" conectara el mundo real con el mundo de los monstruos se abriera, algunas de las personas recibieron el poder de cazar los monstruos que vivían al otro lado de esta. Se les conoce como "cazadores". Sin embargo, no todos los cazadores son poderosos. Sung Jin-Woo, un cazador de rango E, es alguien que tiene que arriesgar su vida en humildes calabozos, lo llaman el "más débil del mundo"...',
-  sinonimos: 'Solo Leveling; I Level Up Alone; Ore dake Level Up na Ken; ソロレベリング',
-  autores: ['Chugong'], arte: ['DUBU (REDICE Studio)'], subidoPor: '',
-  counts: {leido:4806, pendiente:974, siguiendo:2030, favorito:2435, tengo:291, abandonado:28}
-};
-const META_TSUKI = {
-  rating: 9.4, demographic: 'Shounen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'img/cover-tsuki.jpg',
-  genres: ['Acción','Aventura','Recuentos de la vida','Magia'],
-  synopsis: 'Misumi Makoto era solo un estudiante normal, hasta que fue invocado a otro mundo a causa de sus padres. Pero la diosa de ese mundo decidió que el era feo y por eso lo arrojó al páramo en los extremos más lejanos de ese mundo. Vagando por las tierras baldías en busca de calor humano, todos los encuentros de Makoto son con seres no-humanos, incluso sus 2 hermosas compañeras son un dragón y una araña gigante. ¿Exactamente a dónde lo llevará esta aventura?...',
-  sinonimos: 'Tsuki ga Michibiku Isekai Douchuu',
-  autores: ['azumi kei','kino','kotora'], arte: ['azumi kei'], subidoPor: '',
-  counts: {leido:123, pendiente:432, siguiendo:2049, favorito:630, tengo:66, abandonado:11}
-};
 function baseChapters(mid){
-  if (mid === 8) return (typeof CHAPTERS_TSUKI !== 'undefined' ? CHAPTERS_TSUKI : []);
-  if (mid === 7) return (typeof CHAPTERS_SOLO !== 'undefined' ? CHAPTERS_SOLO : []);
   if (mid === 6) return (typeof CHAPTERS_HAREM !== 'undefined' ? CHAPTERS_HAREM : []);
   if (mid === 4) return (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA : []);
   if (mid === 5) return (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI : []);
@@ -179,8 +161,6 @@ function mangaList(){
     {title: 'Mairimashita! Iruma-kun', meta: META_IRUMA, chapters: (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA.slice() : [])},
     {title: 'Isekai Nonbiri Nouka', meta: META_NONBIRI, chapters: (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI.slice() : [])},
     {title: 'Isekai Meikyuu de Harem wo', meta: META_HAREM, chapters: (typeof CHAPTERS_HAREM !== 'undefined' ? CHAPTERS_HAREM.slice() : [])},
-    {title: 'Solo Leveling', meta: META_SOLO, chapters: (typeof CHAPTERS_SOLO !== 'undefined' ? CHAPTERS_SOLO.slice() : [])},
-    {title: 'Tsuki ga Michibiku Isekai Douchuu', meta: META_TSUKI, chapters: (typeof CHAPTERS_TSUKI !== 'undefined' ? CHAPTERS_TSUKI.slice() : [])},
   ];
   base.forEach((m, idx) => {
     const hid = (ov.hidden || {})[idx] || {};
@@ -191,6 +171,7 @@ function mangaList(){
     for (const a of (ov.added || [])){
       if (a.manga === idx && !hid[a.num]) m.chapters.push({num:a.num, title:a.title, date:a.date, strips:a.strips, stripCount:a.strips.length, pages:null});
     }
+    m.hiddenManga = !!((ov.mangaHidden || {})[idx]);
   });
   return base;
 }
@@ -224,7 +205,7 @@ function initHome(){
 function buildGenre(){
   const sel = $('#genreSel'), cur = sel.value;
   const set = {};
-  mangaList().forEach(m => (m.meta.genres || []).forEach(g => set[g] = 1));
+  mangaList().forEach(m => { if (m.hiddenManga && !isAdmin()) return; (m.meta.genres || []).forEach(g => set[g] = 1); });
   sel.innerHTML = '<option value="">Todos los géneros</option>' +
     Object.keys(set).sort().map(g => '<option value="' + escapeHtml(g) + '">' + escapeHtml(g) + '</option>').join('');
   sel.value = cur;
@@ -253,7 +234,7 @@ function mangaCard(m, idx, favs){
   const card = document.createElement('div');
   card.className = 'mCard';
   card.innerHTML =
-    '<div class="mTitle">' + escapeHtml(m.title) + '</div>' +
+    '<div class="mTitle">' + escapeHtml(m.title) + (m.hiddenManga ? ' <span class="pill">oculto</span>' : '') + '</div>' +
     '<div class="mCoverWrap"><img src="' + m.meta.cover + '" alt="Portada" loading="lazy">' +
     '<span class="mType">' + escapeHtml(m.meta.tipo || 'MANGA') + '<br><span class="sc">★ ' + m.meta.rating.toFixed(2) + '</span></span>' +
     (favs.includes(idx) ? '<span class="mFav">⭐</span>' : '') + '</div>' +
@@ -280,6 +261,7 @@ function renderCards(q){
   const list = [];
   mangaList().forEach((m, idx) => {
     if (!cardMatch(m, q)) return;
+    if (m.hiddenManga && !isAdmin()) return;
     if (gz && !(m.meta.genres || []).includes(gz)) return;
     list.push({m, idx});
   });
@@ -313,7 +295,7 @@ function renderTop(){
   const agg = {};
   Object.keys(s.opens || {}).forEach(k => {
     const m = +k.split(':')[0];
-    if (ml[m]) agg[m] = (agg[m]||0) + s.opens[k];
+    if (ml[m] && (isAdmin() || !ml[m].hiddenManga)) agg[m] = (agg[m]||0) + s.opens[k];
   });
   const top = Object.keys(agg).sort((a,b)=>agg[b]-agg[a]).slice(0,5);
   box.innerHTML = top.length ? top.map((m, i) =>
@@ -327,7 +309,7 @@ function renderCont(){
   try { last = JSON.parse(localStorage.getItem('sl-proglast') || 'null'); } catch(e){}
   if (!last || typeof last.c !== 'number'){ sec.hidden = true; return; }
   const ml = mangaList();
-  if (!ml[last.m] || !ml[last.m].chapters.some(c => c.num === last.c)){ sec.hidden = true; return; }
+  if (!ml[last.m] || (ml[last.m].hiddenManga && !isAdmin()) || !ml[last.m].chapters.some(c => c.num === last.c)){ sec.hidden = true; return; }
   sec.hidden = false;
   $('#contBtn').textContent = '▶ Continuar: ' + ml[last.m].title + ' · Cap. ' + last.c + ' · pág. ' + ((last.p || 0) + 1);
   $('#contBtn').onclick = () => { state.manga = last.m; openChapter(last.c, {startPage: last.p || 0}); };
@@ -350,13 +332,15 @@ function timeAgo(t){
 }
 function renderHist(){
   const box = $('#histList'); box.innerHTML = '';
-  const h = getHist().slice(0, 8);
+  const ml0 = mangaList();
+  const h = getHist().filter(e => ml0[e.m] && (isAdmin() || !ml0[e.m].hiddenManga)).slice(0, 8);
   $('#histHead').hidden = !h.length;
   $('#histClear').hidden = !h.length;
   if (!h.length) return;
   const ml = mangaList(), pm = getProgMap();
   for (const e of h){
     if (!ml[e.m]) continue;
+    if (ml[e.m].hiddenManga && !isAdmin()) continue;
     const row = document.createElement('div');
     row.className = 'histRow';
     const pg = pm[e.m + ':' + e.c];
@@ -378,6 +362,7 @@ function setReads(r){ try { localStorage.setItem('sl-reads', JSON.stringify(r));
 function openDetail(){
   stopAll();
   const m = curManga(), meta = m.meta, chaps = m.chapters;
+  if (m.hiddenManga && !isAdmin()){ toast('Manga no disponible'); show('home'); renderCards(($('#catSearch') && $('#catSearch').value) || ''); return; }
   $('#dCover').setAttribute('src', meta.cover);
   $('#dTitle').textContent = m.title;
   $('#dMeta').innerHTML = '<span class="pill estadoDot">● ' + escapeHtml(meta.estado) + '</span> <span class="pill">' + escapeHtml(meta.demographic) + '</span> <span class="pill">★ ' + meta.rating.toFixed(2) + '</span>';
@@ -575,6 +560,7 @@ async function openChapter(num, opts){
   opts = opts || {};
   const ch = curManga().chapters.find(c => c.num === num);
   if (!ch) return;
+  if (curManga().hiddenManga && !isAdmin()){ toast('Manga no disponible'); return; }
   stopAll();
   state.chap = ch; state.pages = []; state.pageIndex = 0;
   state.voiceMode = !!(opts.autoplay || opts.voice);
@@ -936,8 +922,28 @@ function updateAdminBtn(){ $('#adminBtn').textContent = isAdmin() ? '🔓' : '�
 function openAdminPanel(){
   if (!isAdmin()){ $('#loginModal').hidden = false; setTimeout(()=>{ try{$('#adminPass').focus();}catch(e){} }, 50); return; }
   renderAdminList();
+  renderAdminMangas();
   renderAdminStats();
   $('#adminModal').hidden = false;
+}
+function renderAdminMangas(){
+  const ov = getOv();
+  const box = $('#admMangaList'); if (!box) return; box.innerHTML = '';
+  mangaList().forEach((m, idx) => {
+    const hid = !!((ov.mangaHidden || {})[idx]);
+    const row = document.createElement('div');
+    row.className = 'admRow';
+    row.innerHTML = '<div class="t"><b>' + escapeHtml(m.title) + '</b> (' + m.chapters.length + ' caps.)' + (hid ? ' <span class="pill">oculto</span>' : '') + '</div>';
+    const b = document.createElement('button'); b.className = 'smallBtn'; b.textContent = hid ? 'Mostrar' : 'Ocultar';
+    b.onclick = () => {
+      const o = getOv(); o.mangaHidden = o.mangaHidden || {};
+      if (hid) delete o.mangaHidden[idx]; else o.mangaHidden[idx] = 1;
+      saveOv(o); renderAdminMangas(); renderAdminList(); openDetailRefresh();
+      toast(hid ? 'Manga visible' : 'Manga oculto');
+    };
+    row.appendChild(b);
+    box.appendChild(row);
+  });
 }
 function renderAdminList(){
   const ov = getOv();
@@ -1442,6 +1448,7 @@ $('#ghRepo').onchange = e => { try { localStorage.setItem('sl-ghrepo', e.target.
     const m = Math.max(0, parseInt(q.get('manga') || '0', 10) || 0);
     const ml = mangaList();
     if (!ml[m]) return;
+    if (ml[m].hiddenManga && !isAdmin()) return;
     const num = parseInt(q.get('chap'), 10);
     if (!ml[m].chapters.some(c => c.num === num)) return;
     const pg = Math.max(0, parseInt(q.get('page') || '0', 10) || 0);
@@ -1523,17 +1530,18 @@ function renderLists(){
   const ml = mangaList(), favs = getFavs(), pm = getProgMap();
   const reading = [], pending = [];
   ml.forEach((m, i) => {
+    if (m.hiddenManga && !isAdmin()) return;
     const hasProg = Object.keys(pm).some(k => k.indexOf(i + ':') === 0);
     (hasProg ? reading : pending).push(i);
   });
   const smart = [
-    {name: '⭐ Favoritos', items: favs.filter(i => ml[i])},
+    {name: '⭐ Favoritos', items: favs.filter(i => ml[i] && (isAdmin() || !ml[i].hiddenManga))},
     {name: '📖 Leyendo', items: reading},
     {name: '🕘 Pendientes', items: pending},
   ];
   for (const s of smart) box.appendChild(listCard(s.name, s.items, null));
   const st = listStore();
-  for (const c of st.d.custom) box.appendChild(listCard('📝 ' + c.name, c.items.filter(i => ml[i]), c.id));
+  for (const c of st.d.custom) box.appendChild(listCard('📝 ' + c.name, c.items.filter(i => ml[i] && (isAdmin() || !ml[i].hiddenManga)), c.id));
   if (!st.d.custom.length){
     const p = document.createElement('p');
     p.style.color = 'var(--dim)';
@@ -1551,7 +1559,7 @@ function listCard(name, items, cid){
     (cid ? '<button class="smallBtn" data-unlist="' + i + '">✕</button>' : '<button class="smallBtn" data-open="' + i + '">Ver</button>') + '</div>').join('');
   if (cid){
     h += '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><select data-addsel>' +
-      ml.map((m, i) => '<option value="' + i + '">' + escapeHtml(m.title) + '</option>').join('') +
+      ml.map((m, i) => ((m.hiddenManga && !isAdmin()) ? '' : '<option value="' + i + '">' + escapeHtml(m.title) + '</option>')).join('') +
       '</select><button class="smallBtn" data-addmanga>+ Añadir</button>' +
       '<span style="flex:1"></span><button class="smallBtn" data-dellist>Eliminar lista</button></div>';
   }
