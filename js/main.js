@@ -63,7 +63,16 @@ const META_SOLO = {
   autores: ['Chugong'], arte: ['DUBU (REDICE Studio)'], subidoPor: '',
   counts: {leido:4806, pendiente:974, siguiendo:2030, favorito:2435, tengo:291, abandonado:28}
 };
+const META_TSUKI = {
+  rating: 9.4, demographic: 'Shounen', tipo: 'MANGA', estado: 'PUBLICÁNDOSE', cover: 'img/cover-tsuki.jpg',
+  genres: ['Acción','Aventura','Recuentos de la vida','Magia'],
+  synopsis: 'Misumi Makoto era solo un estudiante normal, hasta que fue invocado a otro mundo a causa de sus padres. Pero la diosa de ese mundo decidió que el era feo y por eso lo arrojó al páramo en los extremos más lejanos de ese mundo. Vagando por las tierras baldías en busca de calor humano, todos los encuentros de Makoto son con seres no-humanos, incluso sus 2 hermosas compañeras son un dragón y una araña gigante. ¿Exactamente a dónde lo llevará esta aventura?...',
+  sinonimos: 'Tsuki ga Michibiku Isekai Douchuu',
+  autores: ['azumi kei','kino','kotora'], arte: ['azumi kei'], subidoPor: '',
+  counts: {leido:123, pendiente:432, siguiendo:2049, favorito:630, tengo:66, abandonado:11}
+};
 function baseChapters(mid){
+  if (mid === 8) return (typeof CHAPTERS_TSUKI !== 'undefined' ? CHAPTERS_TSUKI : []);
   if (mid === 7) return (typeof CHAPTERS_SOLO !== 'undefined' ? CHAPTERS_SOLO : []);
   if (mid === 6) return (typeof CHAPTERS_HAREM !== 'undefined' ? CHAPTERS_HAREM : []);
   if (mid === 4) return (typeof CHAPTERS_IRUMA !== 'undefined' ? CHAPTERS_IRUMA : []);
@@ -171,6 +180,7 @@ function mangaList(){
     {title: 'Isekai Nonbiri Nouka', meta: META_NONBIRI, chapters: (typeof CHAPTERS_NONBIRI !== 'undefined' ? CHAPTERS_NONBIRI.slice() : [])},
     {title: 'Isekai Meikyuu de Harem wo', meta: META_HAREM, chapters: (typeof CHAPTERS_HAREM !== 'undefined' ? CHAPTERS_HAREM.slice() : [])},
     {title: 'Solo Leveling', meta: META_SOLO, chapters: (typeof CHAPTERS_SOLO !== 'undefined' ? CHAPTERS_SOLO.slice() : [])},
+    {title: 'Tsuki ga Michibiku Isekai Douchuu', meta: META_TSUKI, chapters: (typeof CHAPTERS_TSUKI !== 'undefined' ? CHAPTERS_TSUKI.slice() : [])},
   ];
   base.forEach((m, idx) => {
     const hid = (ov.hidden || {})[idx] || {};
