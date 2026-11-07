@@ -86,6 +86,10 @@ const state = {
   sortAsc: (localStorage.getItem('sl-sort') || 'desc') === 'asc',
   mode: localStorage.getItem('sl-mode') || 'translation',
   rate: parseFloat(localStorage.getItem('sl-rate') || '1') || 1,
+  tts: localStorage.getItem('sl-tts') || 'sistema',
+  elevenKey: localStorage.getItem('sl-eleven-key') || '',
+  elevenMale: localStorage.getItem('sl-eleven-male') || '',
+  elevenFemale: localStorage.getItem('sl-eleven-female') || '',
   voice: null,
   readWidth: localStorage.getItem('sl-width') || 'ancho',
   readBg: localStorage.getItem('sl-bg') || 'negro',
@@ -147,6 +151,12 @@ function applyReadPrefs(){
     b.classList.toggle('primary', (b.dataset.s === 'si') === state.spread);
   });
   try { $('#rsGc').value = gcCode(); } catch(e){}
+  try {
+    const k = $('#rsElevenKey'); if (k) k.value = state.elevenKey || '';
+    const m = $('#rsElevenMale'); if (m) m.value = state.elevenMale || '';
+    const f = $('#rsElevenFemale'); if (f) f.value = state.elevenFemale || '';
+    document.querySelectorAll('[data-tts]').forEach(b=>b.classList.toggle('primary', b.dataset.tts === state.tts));
+  } catch(e){}
   applyZoom();
   $('#rsSpeed').value = String(state.autoDelay);
   $('#rsSpeedVal').textContent = state.autoDelay + ' s';
@@ -738,7 +748,8 @@ function transLine(l, p, i){
   const d = document.createElement('div');
   d.className = 'line' + (p === state.pageIndex && i === state.lineIndex ? ' active' : '');
   d.dataset.p = p; d.dataset.k = i;
-  d.innerHTML = (l.speaker ? '<span class="spk">' + escapeHtml(l.speaker) + '</span>' : '') + escapeHtml(lineText(l));
+  const g = l.gender === 'male' ? '♂' : (l.gender === 'female' ? '♀' : '');
+  d.innerHTML = (l.speaker ? '<span class="spk">' + escapeHtml(l.speaker) + '</span>' : '') + (g ? '<span class="gnd">' + g + '</span>' : '') + escapeHtml(lineText(l));
   d.onclick = () => {
     if (state.readMode === 'cascade' && p !== state.pageIndex) setPage(p);
     if (state.voiceMode) speakFrom(i);
@@ -787,28 +798,121 @@ function setActive(i){
   if (act && act.scrollIntoView) act.scrollIntoView({block:'nearest', behavior:'smooth'});
 }
 
-/* ---------- voz (del propio dispositivo) ---------- */
-function pickVoice(){
+/* ---------- voz (del propio dispositivo, hombre/mujer) ---------- */
+const VOICE_FEMALE_RE = /(female|f[eé]mina|femenin|mujer|helena|laura|luc[ií]a|sof[ií]a|m[oó]nica|paulina|valentina|camila|carmen|elena|isabel|rosa\b|ana\b|mar[ií]a|nancy|dalina|google espa[nñ]ol)/i;
+const VOICE_MALE_RE = /(male|masculin|hombre|pablo|diego|jorge|carlos|miguel|rafael|pedro|juan\b|luis|antonio|vernon|david|sergio|[aá]lvaro|enrique|francisco|javier\b)/i;
+function pickVoices(){
   try {
     const vs = speechSynthesis.getVoices() || [];
     const es = vs.filter(v => /^es/i.test(v.lang || ''));
-    if (es.length) return es[0];
-    return vs[0] || null;
-  } catch(e){ return null; }
+    const pool = es.length ? es : vs;
+    if (!pool.length) return {M:null, F:null, N:null};
+    const F = pool.find(v => VOICE_FEMALE_RE.test((v.name || ''))) || null;
+    const M = pool.find(v => v !== F && !VOICE_FEMALE_RE.test((v.name || '')) && VOICE_MALE_RE.test((v.name || ''))) || null;
+    return {M, F, N: pool[0]};
+  } catch(e){ return {M:null, F:null, N:null}; }
+}
+function refreshVoices(){
+  try {
+    const V = pickVoices();
+    state.voiceM = V.M; state.voiceF = V.F; state.voice = V.N || V.M || V.F;
+  } catch(e){}
 }
 if ('speechSynthesis' in window){
   try {
-    speechSynthesis.onvoiceschanged = () => { state.voice = pickVoice(); };
-    state.voice = pickVoice();
+    speechSynthesis.onvoiceschanged = () => refreshVoices();
+    refreshVoices();
   } catch(e){}
 }
-function speakText(text){
+function voiceFor(line){
+  const g = line && (line.gender === 'male' || line.gender === 'female') ? line.gender : null;
+  if (g === 'female') return {v: state.voiceF || state.voice, pitch: state.voiceF ? 1 : 1.2};
+  if (g === 'male') return {v: state.voiceM || state.voice, pitch: state.voiceM ? 1 : 0.8};
+  return {v: state.voice, pitch: 1};
+}
+function speakText(text, line){
+  if (state.tts === 'eleven') return speakTextEleven(text, line);
+  return speakTextSystem(text, line);
+}
+function elevenNote(msg){
+  try { $('#status').textContent = msg; } catch(e){}
+  try { const m = $('#rsElevenMsg'); if (m) m.textContent = msg; } catch(e){}
+}
+function elevenVoiceIdFor(line){
+  const g = line && line.gender;
+  if (g === 'female' && state.elevenFemale) return state.elevenFemale;
+  if (g === 'male' && state.elevenMale) return state.elevenMale;
+  return state.elevenFemale || state.elevenMale || null;
+}
+function playElevenBlob(blob, maxMs){
+  return new Promise(resolve => {
+    let done = false;
+    const fin = ok => { if (!done){ done = true; if (elevenResolve === fin) elevenResolve = null; resolve(!!ok); } };
+    elevenResolve = fin;
+    try { if (elevenAudio){ elevenAudio.pause(); elevenAudio.src = ''; } } catch(e){}
+    const url = URL.createObjectURL(blob);
+    const a = new Audio(url);
+    elevenAudio = a;
+    try { a.playbackRate = state.rate || 1; } catch(e){}
+    a.onended = () => { try { URL.revokeObjectURL(url); } catch(e){} if (elevenAudio === a) elevenAudio = null; fin(true); };
+    a.onerror = () => { try { URL.revokeObjectURL(url); } catch(e){} fin(false); };
+    setTimeout(() => fin(true), Math.max(15000, maxMs || 0));
+    try { const p = a.play(); if (p && p.catch) p.catch(() => fin(false)); } catch(e){ fin(false); }
+  });
+}
+async function elevenSpeak(text, line){
+  const key = (state.elevenKey || '').trim();
+  const voiceId = (elevenVoiceIdFor(line) || '').trim();
+  if (!key || !voiceId) return false;
+  let h = 0;
+  for (let i = 0; i < text.length; i++){ h = (h * 31 + text.charCodeAt(i)) | 0; }
+  const ck = 'eleven-' + voiceId + '-' + (h >>> 0).toString(36) + '-' + text.length;
+  try {
+    const cache = await caches.open('tts-v1');
+    const hit = await cache.match('/tts/' + ck);
+    if (hit){
+      const blob = await hit.blob();
+      if (blob && blob.size > 0) return await playElevenBlob(blob, text.length * 600 + 15000);
+    }
+  } catch(e){}
+  let resp = null;
+  try {
+    resp = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + encodeURIComponent(voiceId), {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'xi-api-key': key},
+      body: JSON.stringify({text: text, model_id: 'eleven_multilingual_v2', voice_settings: {stability: 0.5, similarity_boost: 0.75}})
+    });
+  } catch(e){ return false; }
+  if (!resp || !resp.ok){
+    let detail = '';
+    try { detail = (await resp.text() || '').slice(0, 120); } catch(e){}
+    elevenNote('ElevenLabs ' + (resp ? resp.status : '?') + (detail ? ': ' + detail : '') + ' — usando voz del sistema.');
+    return false;
+  }
+  const blob = await resp.blob();
+  if (!blob || blob.size === 0) return false;
+  try {
+    const cache = await caches.open('tts-v1');
+    await cache.put('/tts/' + ck, new Response(blob, {headers: {'Content-Type': blob.type || 'audio/mpeg'}}));
+  } catch(e){}
+  return await playElevenBlob(blob, text.length * 600 + 15000);
+}
+async function speakTextEleven(text, line){
+  try {
+    const ok = await elevenSpeak(text, line);
+    if (ok) return;
+  } catch(e){}
+  await speakTextSystem(text, line);
+}
+function speakTextSystem(text, line){
   return new Promise(resolve => {
     if (!('speechSynthesis' in window)){ resolve(); return; }
     try { speechSynthesis.cancel(); } catch(e){}
     const u = new SpeechSynthesisUtterance(text);
-    if (state.voice) u.voice = state.voice;
-    u.lang = (state.voice && state.voice.lang) || 'es-ES';
+    const pick = voiceFor(line);
+    if (pick.v){ u.voice = pick.v; u.lang = pick.v.lang || 'es-ES'; }
+    else u.lang = 'es-ES';
+    try { u.pitch = pick.pitch; } catch(e){}
     u.rate = state.rate || 1;
     let done = false;
     const fin = () => { if (!done){ done = true; resolve(); } };
@@ -821,6 +925,8 @@ function speakText(text){
 function stopAll(){
   state.gen++;
   state.playing = false;
+  try { if (typeof elevenAudio !== 'undefined' && elevenAudio){ elevenAudio.pause(); elevenAudio.src = ''; elevenAudio = null; } } catch(e){}
+  try { if (typeof elevenResolve === 'function'){ const r = elevenResolve; elevenResolve = null; try { r(false); } catch(_){} } } catch(e){}
   try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch(e){}
   $('#playBtn').textContent = '▶ Escuchar';
 }
@@ -834,13 +940,13 @@ async function speakFrom(i){
   }
   try { speechSynthesis.cancel(); } catch(e){}
   try { speechSynthesis.resume(); } catch(e){}
-  state.voice = pickVoice();
+  state.voice = null; refreshVoices();
   if (!state.voice){
     try {
       await new Promise(r=>{
         let done = false;
         const fin = ()=>{ if(!done){ done=true; r(); } };
-        speechSynthesis.onvoiceschanged = ()=>{ state.voice = pickVoice(); fin(); };
+        speechSynthesis.onvoiceschanged = ()=>{ refreshVoices(); fin(); };
         setTimeout(fin, 1500);
       });
     } catch(e){}
@@ -867,7 +973,7 @@ async function speakFrom(i){
     }
     setActive(k);
     const t = lineText(lines[k]);
-    if (t && t.trim()) await speakText(t);
+    if (t && t.trim()) await speakText(t, lines[k]);
     if (state.gen !== gen || !state.playing) break;
     k++;
     await sleep(250);
@@ -1249,6 +1355,31 @@ document.querySelectorAll('#rsSpreadRow button').forEach(b=>{ b.onclick = ()=>{
 $('#zoomIn').onclick = () => setZoom(state.zoom + .25);
 $('#zoomOut').onclick = () => setZoom(state.zoom - .25);
 $('#rsGc').onchange = e => { try { localStorage.setItem('sl-gc', e.target.value.trim()); } catch(_){} loadGc(); toast('Contador actualizado'); };
+let elevenAudio = null;
+let elevenResolve = null;
+document.querySelectorAll('[data-tts]').forEach(b=>{ b.onclick = ()=>{
+  state.tts = b.dataset.tts;
+  try { localStorage.setItem('sl-tts', state.tts); } catch(e){}
+  try { document.querySelectorAll('[data-tts]').forEach(x=>x.classList.toggle('primary', x === b)); } catch(e){}
+  toast(state.tts === 'eleven' ? 'Voz IA ElevenLabs activada' : 'Voz del sistema activada');
+};});
+function syncElevenFromDom(){
+  try {
+    state.elevenKey = ($('#rsElevenKey').value || '').trim();
+    state.elevenMale = ($('#rsElevenMale').value || '').trim();
+    state.elevenFemale = ($('#rsElevenFemale').value || '').trim();
+    localStorage.setItem('sl-eleven-key', state.elevenKey);
+    localStorage.setItem('sl-eleven-male', state.elevenMale);
+    localStorage.setItem('sl-eleven-female', state.elevenFemale);
+  } catch(e){}
+}
+try {
+  $('#rsElevenKey').onchange = syncElevenFromDom;
+  $('#rsElevenMale').onchange = syncElevenFromDom;
+  $('#rsElevenFemale').onchange = syncElevenFromDom;
+  $('#rsElevenTestM').onclick = async () => { syncElevenFromDom(); elevenNote('Probando voz ♂...'); const ok = await elevenSpeak('Hola, soy la voz masculina de tu manga.', {gender:'male'}); elevenNote(ok ? 'Voz ♂ OK' : 'No se pudo generar. Revisa key y Voice ID.'); };
+  $('#rsElevenTestF').onclick = async () => { syncElevenFromDom(); elevenNote('Probando voz ♀...'); const ok = await elevenSpeak('Hola, soy la voz femenina de tu manga.', {gender:'female'}); elevenNote(ok ? 'Voz ♀ OK' : 'No se pudo generar. Revisa key y Voice ID.'); };
+} catch(e){}
 $('#rsSideNone').onclick = () => { setSide({t:'none'}); applySideBg(); };
 $('#rsSideUp').onclick = () => $('#rsSideFile').click();
 $('#rsSideFile').onchange = async e => {
